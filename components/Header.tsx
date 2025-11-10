@@ -54,12 +54,12 @@ const Header: React.FC<HeaderProps> = ({ setView, onOpenApplyNow, colleges }) =>
                 <div className="flex items-center justify-between h-20">
                     {/* Left side: Logo */}
                     <div className="flex items-center">
-                        <div 
-                            className="text-2xl font-bold cursor-pointer text-[--text-primary]"
+                        <img
+                            src="/logos/StudyCups.png"
+                            alt="StudyCups Education"
+                            className="h-10 w-auto cursor-pointer select-none"
                             onClick={() => setView({ page: 'home' })}
-                        >
-                            Study<span className="text-[--primary-medium]">Cups</span>
-                        </div>
+                        />
                     </div>
                     
                     {/* Center: Search Bar */}

@@ -15,7 +15,7 @@ const Footer: React.FC = () => {
                     <div className="lg:col-span-2 mb-6 md:mb-0">
                         <h2 className="text-3xl font-extrabold text-white">StudyCups Education</h2>
                         <p className="mt-4 text-slate-300 max-w-md">Your one-stop destination for finding the perfect college and course to shape your future.</p>
-                        <p className="mt-2 text-slate-300">Contact: +91 9838003440</p>
+                        <p className="mt-2 text-slate-300">Contact: +91 8081269969</p>
                         <div className="mt-6">
                             <p className="font-semibold mb-2">Subscribe to our newsletter</p>
                             <form className="flex flex-col sm:flex-row gap-2">

@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import type { View, College } from '../types';
+import { PARTNER_LOGOS } from '../logos';
 import CollegeCard from '../components/CollegeCard';
 import { EXAMS_DATA, BLOG_POSTS_DATA, TESTIMONIALS_DATA, COURSE_STREAMS } from '../constants';
 import { useOnScreen } from '../hooks/useOnScreen';
@@ -242,31 +243,22 @@ const HomePage: React.FC<HomePageProps> = ({ setView, colleges, onOpenApplyNow }
                     <h2 className="text-center text-lg font-semibold text-slate-500 mb-8">
                         Trusted by Students from Top Institutions
                     </h2>
-                    {(() => {
-                        const placeholderLogo = 'https://dummyimage.com/160x64/ffffff/cccccc.png&text=Logo';
-                        const partnerLogos = PARTNER_LOGOS;
-                        const scrollingList = [...partnerLogos, ...partnerLogos];
-
-                        return (
-                            <div 
-                                className="scrolling-logos-container w-full overflow-hidden relative"
-                                style={{ maskImage: "linear-gradient(to right, transparent, black 20%, black 80%, transparent)" }}
-                            >
-                                <div className="flex animate-scroll">
-                                    {scrollingList.map((logo, index) => (
-                                        <div key={`${logo.alt}-${index}`} className="flex-shrink-0 mx-10" style={{ width: '160px'}}>
-                                            <img 
-                                                src={logo.src} 
-                                                alt={`${logo.alt} logo`} 
-                                                className="h-16 w-full object-contain filter grayscale hover:grayscale-0 transition-all duration-300"
-                                                onError={(e) => { (e.currentTarget as HTMLImageElement).src = placeholderLogo; }}
-                                            />
-                                        </div>
-                                    ))}
+                    <div 
+                        className="scrolling-logos-container w-full overflow-hidden relative"
+                        style={{ maskImage: "linear-gradient(to right, transparent, black 20%, black 80%, transparent)" }}
+                    >
+                        <div className="flex animate-scroll">
+                            {[...PARTNER_LOGOS, ...PARTNER_LOGOS].map((logo, index) => (
+                                <div key={`${logo.src}-${index}`} className="flex-shrink-0 mx-10" style={{ width: '160px'}}>
+                                    <img 
+                                        src={logo.src} 
+                                        alt={logo.alt} 
+                                        className="h-16 w-full object-contain filter grayscale hover:grayscale-0 transition-all duration-300" 
+                                    />
                                 </div>
-                            </div>
-                        );
-                    })()}
+                            ))}
+                        </div>
+                    </div>
                 </div>
             </section>
 
@@ -567,7 +559,7 @@ const HomePage: React.FC<HomePageProps> = ({ setView, colleges, onOpenApplyNow }
                                         </div>
                                         <div>
                                             <p className="font-semibold text-slate-800">Phone</p>
-                                            <a href="tel:+919838003440" className="text-slate-600 hover:text-[--primary-medium]">+91 9838003440</a>
+                                            <a href="tel:+918081269969" className="text-slate-600 hover:text-[--primary-medium]">+91 8081269969</a>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-4">
@@ -578,7 +570,7 @@ const HomePage: React.FC<HomePageProps> = ({ setView, colleges, onOpenApplyNow }
                                         </div>
                                         <div>
                                             <p className="font-semibold text-slate-800">Email</p>
-                                            <a href="mailto:contact@studycups.com" className="text-slate-600 hover:text-[--primary-medium]">contact@studycups.com</a>
+                                            <a href="mailto:Support@studycups.in" className="text-slate-600 hover:text-[--primary-medium]">Support@studycups.in</a>
                                         </div>
                                     </div>
                                 </div>
@@ -596,4 +588,3 @@ const HomePage: React.FC<HomePageProps> = ({ setView, colleges, onOpenApplyNow }
 };
 
 export default HomePage;
-import { PARTNER_LOGOS } from "../logos";

@@ -115,64 +115,24 @@ const COLLEGES_COURSES: { [key: string]: Course[] } = {
         { id: 11, name: 'LLB', duration: '5 Years', level: 'Undergraduate', fees: 250000, eligibility: '10+2 + CLAT' },
         { id: 12, name: 'LLM', duration: '1 Year', level: 'Postgraduate', fees: 180000, eligibility: 'LLB + CLAT PG' },
     ]
-};
-
-// Added courses for new colleges
-const NEW_COURSE_ID_START = 13;
-const COLLEGES_COURSES_EXT: { [key: string]: Course[] } = {
+    ,
     'ABS': [
-        { id: 13, name: 'PGDM in Marketing', duration: '2 Years', level: 'Postgraduate', fees: 350000, eligibility: 'Graduation + CAT/MAT/ATMA/XAT/CMAT' },
-        { id: 14, name: 'BBA', duration: '3 Years', level: 'Undergraduate', fees: 150000, eligibility: '10+2' },
+        { id: 101, name: 'PGDM in Marketing', duration: '2 Years', level: 'Postgraduate', fees: 450000, eligibility: 'Graduation with 50% + CAT/XAT/CMAT/MAT/GMAT/ATMA' },
+        { id: 102, name: 'PGDM in Finance', duration: '2 Years', level: 'Postgraduate', fees: 450000, eligibility: 'Graduation with 50% + CAT/XAT/CMAT/MAT/GMAT/ATMA' },
+        { id: 103, name: 'PGDM in Human Resource Management', duration: '2 Years', level: 'Postgraduate', fees: 450000, eligibility: 'Graduation with 50% + CAT/XAT/CMAT/MAT/GMAT/ATMA' },
+        { id: 104, name: 'PGDM in Operations Management', duration: '2 Years', level: 'Postgraduate', fees: 450000, eligibility: 'Graduation with 50% + CAT/XAT/CMAT/MAT/GMAT/ATMA' },
+        { id: 105, name: 'PGDM in Business Analytics', duration: '2 Years', level: 'Postgraduate', fees: 450000, eligibility: 'Graduation with 50% + CAT/XAT/CMAT/MAT/GMAT/ATMA' },
     ],
     'BENNETT': [
-        { id: 15, name: 'B.Tech in Computer Science', duration: '4 Years', level: 'Undergraduate', fees: 250000, eligibility: '10+2 + JEE Main' },
-        { id: 16, name: 'B.Tech in Civil Engineering', duration: '4 Years', level: 'Undergraduate', fees: 240000, eligibility: '10+2 + JEE Main' },
-        { id: 17, name: 'MBA', duration: '2 Years', level: 'Postgraduate', fees: 500000, eligibility: 'Graduation + CAT/XAT/CMAT' },
-        { id: 18, name: 'BBA', duration: '3 Years', level: 'Undergraduate', fees: 180000, eligibility: '10+2' },
-        { id: 19, name: 'LLB', duration: '5 Years', level: 'Undergraduate', fees: 200000, eligibility: '10+2 + CLAT' },
+        { id: 201, name: 'MBA', duration: '2 Years', level: 'Postgraduate', fees: 680000, eligibility: 'Graduation with 50% + CAT/XAT/GMAT/NMAT/MAT/CMAT + PI & SOP' }
+        // Other programs: BBA, Integrated MBA, Ph.D. (can be added on request)
     ],
-    'IILM': [
-        { id: 20, name: 'MBA', duration: '2 Years', level: 'Postgraduate', fees: 400000, eligibility: 'Graduation + CAT/MAT/XAT' },
-        { id: 21, name: 'BBA', duration: '3 Years', level: 'Undergraduate', fees: 150000, eligibility: '10+2' },
-        { id: 22, name: 'LLB', duration: '5 Years', level: 'Undergraduate', fees: 200000, eligibility: '10+2 + CLAT' },
-        { id: 23, name: 'B.Tech in Computer Science', duration: '4 Years', level: 'Undergraduate', fees: 250000, eligibility: '10+2 + JEE Main' },
-    ],
-    'GDGU': [
-        { id: 24, name: 'MBA', duration: '2 Years', level: 'Postgraduate', fees: 300000, eligibility: 'Graduation + CAT/MAT/XAT' },
-        { id: 25, name: 'B.Tech in Mechanical Engineering', duration: '4 Years', level: 'Undergraduate', fees: 220000, eligibility: '10+2 + JEE Main' },
-        { id: 26, name: 'LLB', duration: '5 Years', level: 'Undergraduate', fees: 180000, eligibility: '10+2 + CLAT' },
-        { id: 27, name: 'Bachelor of Design', duration: '4 Years', level: 'Undergraduate', fees: 250000, eligibility: '10+2' },
-    ],
-    'KRMU': [
-        { id: 28, name: 'MBA', duration: '2 Years', level: 'Postgraduate', fees: 280000, eligibility: 'Graduation + CAT/MAT/XAT' },
-        { id: 29, name: 'B.Tech in Computer Science', duration: '4 Years', level: 'Undergraduate', fees: 220000, eligibility: '10+2 + JEE Main' },
-        { id: 30, name: 'LLB', duration: '5 Years', level: 'Undergraduate', fees: 180000, eligibility: '10+2 + CLAT' },
-        { id: 31, name: 'BBA', duration: '3 Years', level: 'Undergraduate', fees: 150000, eligibility: '10+2' },
-        { id: 32, name: 'Bachelor of Design', duration: '4 Years', level: 'Undergraduate', fees: 230000, eligibility: '10+2' },
-    ],
-    'MANGALMAY': [
-        { id: 33, name: 'MBA', duration: '2 Years', level: 'Postgraduate', fees: 250000, eligibility: 'Graduation + CAT/MAT/XAT' },
-        { id: 34, name: 'B.Tech in Civil Engineering', duration: '4 Years', level: 'Undergraduate', fees: 200000, eligibility: '10+2 + JEE Main' },
-        { id: 35, name: 'BBA', duration: '3 Years', level: 'Undergraduate', fees: 120000, eligibility: '10+2' },
-        { id: 36, name: 'B.Com', duration: '3 Years', level: 'Undergraduate', fees: 100000, eligibility: '10+2' },
-    ],
-    'AMITY': [
-        { id: 37, name: 'MBA', duration: '2 Years', level: 'Postgraduate', fees: 300000, eligibility: 'Graduation + AMAT/CAT/XAT' },
-        { id: 38, name: 'B.Tech in Computer Science', duration: '4 Years', level: 'Undergraduate', fees: 250000, eligibility: '10+2 + JEE Main' },
-        { id: 39, name: 'LLB', duration: '5 Years', level: 'Undergraduate', fees: 200000, eligibility: '10+2 + CLAT' },
-        { id: 40, name: 'BBA', duration: '3 Years', level: 'Undergraduate', fees: 150000, eligibility: '10+2' },
-        { id: 41, name: 'Bachelor of Design', duration: '4 Years', level: 'Undergraduate', fees: 250000, eligibility: '10+2' },
-    ],
-    'IITK': [
-        { id: 42, name: 'B.Tech in Computer Science', duration: '4 Years', level: 'Undergraduate', fees: 220000, eligibility: '10+2 with 75% + JEE Advanced' },
-        { id: 43, name: 'M.Tech in AI', duration: '2 Years', level: 'Postgraduate', fees: 150000, eligibility: 'B.Tech + GATE' },
-        { id: 44, name: 'MBA', duration: '2 Years', level: 'Postgraduate', fees: 250000, eligibility: 'Graduation + CAT' },
-    ],
-    'IITB': [
-        { id: 45, name: 'B.Tech in Computer Science', duration: '4 Years', level: 'Undergraduate', fees: 220000, eligibility: '10+2 with 75% + JEE Advanced' },
-        { id: 46, name: 'M.Tech in AI', duration: '2 Years', level: 'Postgraduate', fees: 150000, eligibility: 'B.Tech + GATE' },
-        { id: 47, name: 'MBA', duration: '2 Years', level: 'Postgraduate', fees: 250000, eligibility: 'Graduation + CAT' },
-    ],
+    'NBS': [
+        { id: 301, name: 'MBA + PGPCE', duration: '2 Years', level: 'Postgraduate', fees: 985000, eligibility: 'Graduation with 60% + NBSAT/CMAT/NMAT/XAT/MAT/ATMA/CAT + SOP + PI' },
+        { id: 302, name: 'PGDM Dual Specialization (Finance/Marketing/HR/IT)', duration: '2 Years', level: 'Postgraduate', fees: 795000, eligibility: 'Graduation with 60% + NBSAT/CMAT/NMAT/XAT/MAT/ATMA/CAT + SOP + PI' },
+        { id: 303, name: 'PGDM in Data Science & Analytics', duration: '2 Years', level: 'Postgraduate', fees: 795000, eligibility: 'Graduation with 60% + NBSAT/CMAT/NMAT/XAT/MAT/ATMA/CAT + SOP + PI' },
+        { id: 304, name: 'PGDM in Quantitative Finance', duration: '2 Years', level: 'Postgraduate', fees: 1085000, eligibility: 'Graduation with 60% + NBSAT/CMAT/NMAT/XAT/MAT/ATMA/CAT + SOP + PI' },
+    ]
 };
 
 const COLLEGES_PLACEMENTS: { [key: string]: Placements } = {
@@ -181,19 +141,9 @@ const COLLEGES_PLACEMENTS: { [key: string]: Placements } = {
     'AIIMS': { highestPackage: 'N/A', averagePackage: 'Govt. Stipend', placementPercentage: 100, topRecruiters: ['Government Hospitals', 'Private Hospitals'] },
     'IIMB': { highestPackage: '80 LPA', averagePackage: '33.8 LPA', placementPercentage: 100, topRecruiters: ['McKinsey & Company', 'BCG', 'Bain & Company', 'Goldman Sachs'] },
     'NLU': { highestPackage: '20 LPA', averagePackage: '15 LPA', placementPercentage: 85, topRecruiters: ['Cyril Amarchand Mangaldas', 'Khaitan & Co', 'AZB & Partners'] },
-};
-
-// Added placements for new colleges
-const COLLEGES_PLACEMENTS_EXT: { [key: string]: Placements } = {
-    'ABS': { highestPackage: '15 LPA', averagePackage: '6–7 LPA', placementPercentage: 85, topRecruiters: ['Deloitte', 'KPMG', 'ICICI'] },
-    'BENNETT': { highestPackage: '40 LPA', averagePackage: '8 LPA', placementPercentage: 90, topRecruiters: ['Amazon', 'Microsoft', 'Times Group'] },
-    'IILM': { highestPackage: '24 LPA', averagePackage: '7–8 LPA', placementPercentage: 88, topRecruiters: ['Accenture', 'EY', 'Infosys'] },
-    'GDGU': { highestPackage: '18 LPA', averagePackage: '5–7 LPA', placementPercentage: 85, topRecruiters: ['Deloitte', 'Wipro', 'L&T'] },
-    'KRMU': { highestPackage: '15 LPA', averagePackage: '5–6 LPA', placementPercentage: 85, topRecruiters: ['Infosys', 'IBM', 'ICICI Bank'] },
-    'MANGALMAY': { highestPackage: '12 LPA', averagePackage: '4–5 LPA', placementPercentage: 80, topRecruiters: ['TCS', 'HCL', 'IBM'] },
-    'AMITY': { highestPackage: '22 LPA', averagePackage: '6–7 LPA', placementPercentage: 88, topRecruiters: ['Accenture', 'Amazon', 'Cognizant'] },
-    'IITK': { highestPackage: '2.0 Cr', averagePackage: '15–30 LPA', placementPercentage: 95, topRecruiters: ['Google', 'Microsoft', 'Goldman Sachs'] },
-    'IITB': { highestPackage: '2.2 Cr', averagePackage: '14–30 LPA', placementPercentage: 95, topRecruiters: ['Google', 'IBM', 'Tata'] },
+    'ABS': { highestPackage: '36.64 LPA', averagePackage: 'N/A', placementPercentage: 95, topRecruiters: ['Deloitte', 'Amazon', 'EY'] },
+    'BENNETT': { highestPackage: '33 LPA', averagePackage: 'N/A', placementPercentage: 90, topRecruiters: ['Amazon', 'HDFC', 'S&P Global', 'Accenture'] },
+    'NBS': { highestPackage: '32 LPA', averagePackage: '8.4 LPA', placementPercentage: 100, topRecruiters: ['Deloitte', 'EY', 'PwC', 'KPMG', 'Adani', 'Airtel', 'TCS', 'S&P Global', 'Sony'] },
 };
 
 
@@ -252,106 +202,79 @@ export const COLLEGES_DATA: College[] = [
         feesRange: { min: 180000, max: 300000 },
         courses: COLLEGES_COURSES['NLU'],
         placements: COLLEGES_PLACEMENTS['NLU']
-    }
-    ,
+    },
     {
-        id: 6, name: 'Asian Business School', location: 'Noida, Uttar Pradesh', rating: 4.3, reviewCount: 420,
+        id: 6,
+        name: 'Asian Business School (ABS), Noida',
+        location: 'Noida, Uttar Pradesh',
+        rating: 4.4,
+        reviewCount: 720,
         imageUrl: '/images/ABS.jpg',
-        logoUrl: 'https://dummyimage.com/64x64/ffffff/0b5cff.png&text=ABS',
-        established: 2006, type: 'Private', accreditation: ['AICTE', 'UGC'],
-        description: 'Renowned for PGDM and management programs with industry-focused curriculum.',
-        highlights: ['Industry-Focused Curriculum', 'Live Projects', 'Professional Certifications'],
-        feesRange: { min: 150000, max: 350000 },
-        courses: COLLEGES_COURSES_EXT['ABS'],
-        placements: COLLEGES_PLACEMENTS_EXT['ABS']
+        logoUrl: 'https://abs.edu.in/wp-content/uploads/2020/08/abs-logo.png',
+        established: 1991,
+        type: 'Private',
+        accreditation: ['AICTE', 'NBA', 'AIU', 'AACSB'],
+        description: 'Asian Business School (ABS), part of Asian Education Group, is an AICTE-approved premier B-school offering a globally oriented PGDM program with international certifications, business simulations, and a fully paid international study tour to Oxford/London in the UK.',
+        highlights: [
+            'AICTE, NBA, AIU, AACSB accredited',
+            '1-week fully paid Oxford (UK) study tour',
+            'Industry-linked programs and simulations',
+            'Highest package up to INR 36.64 LPA',
+            '550+ prominent recruiting partners',
+            'Entrepreneurship and digital certifications (NIIT, EDIC, AAFT)',
+            '34+ years of educational excellence'
+        ],
+        feesRange: { min: 900000, max: 900000 },
+        courses: COLLEGES_COURSES['ABS'],
+        placements: COLLEGES_PLACEMENTS['ABS']
     },
     {
-        id: 7, name: 'Bennett University', location: 'Greater Noida, Uttar Pradesh', rating: 4.4, reviewCount: 560,
+        id: 7,
+        name: 'Bennett University, Greater Noida',
+        location: 'Greater Noida, Uttar Pradesh',
+        rating: 4.6,
+        reviewCount: 950,
         imageUrl: '/images/Bennett.jpg',
-        logoUrl: 'https://dummyimage.com/64x64/ffffff/0b5cff.png&text=BU',
-        established: 2016, type: 'Private', accreditation: ['NAAC A', 'UGC'],
-        description: 'A Times Group initiative offering contemporary management, engineering, and law programs.',
-        highlights: ['Modern Infrastructure', 'Industry Collaboration', 'Research Focus'],
-        feesRange: { min: 180000, max: 500000 },
-        courses: COLLEGES_COURSES_EXT['BENNETT'],
-        placements: COLLEGES_PLACEMENTS_EXT['BENNETT']
+        logoUrl: '/images/Bennett.jpg',
+        established: 2016,
+        type: 'Private',
+        accreditation: ['UGC'],
+        description: 'Established by The Times Group, Bennett University offers globally benchmarked, research-driven, and industry-aligned education across multiple schools with strong corporate engagement and experiential learning.',
+        highlights: [
+            'Times Group legacy and global corporate connect',
+            'UGC approved; 68-acre tech-enabled campus',
+            'MBA highest package: INR 33 LPA',
+            'Paid internships and strong placement cell',
+            'Innovation Centre and start-up support',
+            'Comprehensive grooming via Bennett Finishing School'
+        ],
+        feesRange: { min: 650000, max: 680000 },
+        courses: COLLEGES_COURSES['BENNETT'],
+        placements: COLLEGES_PLACEMENTS['BENNETT']
     },
     {
-        id: 8, name: 'IILM University', location: 'Gurugram, Greater Noida, Lodhi Road (Delhi)', rating: 4.2, reviewCount: 480,
-        imageUrl: '/images/iilm.jpg',
-        logoUrl: 'https://dummyimage.com/64x64/ffffff/0b5cff.png&text=IILM',
-        established: 1993, type: 'Private', accreditation: ['NAAC', 'UGC'],
-        description: 'A leading university in business and liberal arts, strong global partnerships.',
-        highlights: ['Global Partnerships', 'Experiential Learning', 'Interdisciplinary Programs'],
-        feesRange: { min: 150000, max: 400000 },
-        courses: COLLEGES_COURSES_EXT['IILM'],
-        placements: COLLEGES_PLACEMENTS_EXT['IILM']
-    },
-    {
-        id: 9, name: 'GD Goenka University', location: 'Gurgaon, Haryana', rating: 4.1, reviewCount: 390,
-        imageUrl: '/images/GD_Goenka.jpg',
-        logoUrl: 'https://dummyimage.com/64x64/ffffff/0b5cff.png&text=GDGU',
-        established: 2013, type: 'Private', accreditation: ['NAAC', 'UGC'],
-        description: 'Business, engineering, law, and design programs with excellent infrastructure.',
-        highlights: ['Excellent Infrastructure', 'Industry Connect', 'Holistic Development'],
-        feesRange: { min: 150000, max: 300000 },
-        courses: COLLEGES_COURSES_EXT['GDGU'],
-        placements: COLLEGES_PLACEMENTS_EXT['GDGU']
-    },
-    {
-        id: 10, name: 'KR Mangalam University', location: 'Gurgaon, Haryana', rating: 4.2, reviewCount: 410,
-        imageUrl: '/images/KR_Mangalam.jpg',
-        logoUrl: 'https://dummyimage.com/64x64/ffffff/0b5cff.png&text=KRMU',
-        established: 2013, type: 'Private', accreditation: ['NAAC', 'UGC'],
-        description: 'Known for student-centric approach and interdisciplinary programs.',
-        highlights: ['Student-Centric Approach', 'Interdisciplinary Learning', 'Modern Labs'],
-        feesRange: { min: 150000, max: 280000 },
-        courses: COLLEGES_COURSES_EXT['KRMU'],
-        placements: COLLEGES_PLACEMENTS_EXT['KRMU']
-    },
-    {
-        id: 11, name: 'Mangalmay Group of Institutions', location: 'Greater Noida, Uttar Pradesh', rating: 4.0, reviewCount: 360,
-        imageUrl: '/images/download (5).jpg',
-        logoUrl: 'https://dummyimage.com/64x64/ffffff/0b5cff.png&text=MGI',
-        established: 2002, type: 'Private', accreditation: ['NAAC', 'UGC'],
-        description: 'Management, engineering, B.Ed, and commerce courses focused on employability.',
-        highlights: ['Employability Focus', 'Industry Ties', 'Affordable Fees'],
-        feesRange: { min: 100000, max: 250000 },
-        courses: COLLEGES_COURSES_EXT['MANGALMAY'],
-        placements: COLLEGES_PLACEMENTS_EXT['MANGALMAY']
-    },
-    {
-        id: 12, name: 'Amity University', location: 'Noida, Lucknow, Gurugram', rating: 4.3, reviewCount: 2100,
-        imageUrl: 'https://images.unsplash.com/photo-1541339907198-8449483da7b7?q=80&w=2070&auto=format&fit=crop',
-        logoUrl: 'https://dummyimage.com/64x64/ffffff/0b5cff.png&text=AMITY',
-        established: 1995, type: 'Private', accreditation: ['NAAC A+', 'UGC'],
-        description: 'Flagship private university with vast course options and global exposures.',
-        highlights: ['Global Exposure', 'Large Campus', 'Advanced Infrastructure'],
-        feesRange: { min: 150000, max: 300000 },
-        courses: COLLEGES_COURSES_EXT['AMITY'],
-        placements: COLLEGES_PLACEMENTS_EXT['AMITY']
-    },
-    {
-        id: 13, name: 'Indian Institute of Technology Kanpur', location: 'Kanpur, Uttar Pradesh', rating: 4.8, reviewCount: 1400,
-        imageUrl: 'https://images.unsplash.com/photo-1622397333335-e6de182a5273?q=80&w=2070&auto=format&fit=crop',
-        logoUrl: 'https://upload.wikimedia.org/wikipedia/en/thumb/8/8d/IIT_Kanpur_Logo.svg/1200px-IIT_Kanpur_Logo.svg.png',
-        established: 1959, type: 'Government', accreditation: ['NIRF', 'NAAC A++'],
-        description: 'Prestigious government engineering and research institute.',
-        highlights: ['Prestigious Institute', 'Strong Research', 'Excellent Placements'],
-        feesRange: { min: 200000, max: 250000 },
-        courses: COLLEGES_COURSES_EXT['IITK'],
-        placements: COLLEGES_PLACEMENTS_EXT['IITK']
-    },
-    {
-        id: 14, name: 'Indian Institute of Technology Bombay', location: 'Powai, Mumbai, Maharashtra', rating: 4.9, reviewCount: 1600,
-        imageUrl: 'https://images.unsplash.com/photo-1622397333335-e6de182a5273?q=80&w=2070&auto=format&fit=crop',
-        logoUrl: 'https://upload.wikimedia.org/wikipedia/en/thumb/8/82/IIT_Bombay_Logo.svg/1200px-IIT_Bombay_Logo.svg.png',
-        established: 1958, type: 'Government', accreditation: ['NIRF', 'NAAC A++'],
-        description: 'Leading engineering, management, and science institute in India.',
-        highlights: ['Top Engineering Institute', 'World-Class Research', 'Cultural Clubs'],
-        feesRange: { min: 200000, max: 250000 },
-        courses: COLLEGES_COURSES_EXT['IITB'],
-        placements: COLLEGES_PLACEMENTS_EXT['IITB']
+        id: 8,
+        name: 'Narayana Business School (NBS), Ahmedabad',
+        location: 'Ahmedabad, Gujarat',
+        rating: 4.5,
+        reviewCount: 680,
+        imageUrl: '/logos/NBS.jpg',
+        logoUrl: '/logos/NBS.jpg',
+        established: 2003,
+        type: 'Private',
+        accreditation: ['IIRF Top 25 (2025)'],
+        description: 'NBS is an independent B-school known for its AI-powered curriculum, strong corporate linkages, global immersion, and consistent 100% placements with top recruiters across India and globally.',
+        highlights: [
+            'Top-ranked private B-School in Gujarat',
+            'AI-powered curriculum and personalized mentor support',
+            '671+ recruiters; consistent 100% placements',
+            'International immersion and paid internships',
+            'Entrepreneurial funding and incubation support',
+            'Scholarships for meritorious students'
+        ],
+        feesRange: { min: 795000, max: 1085000 },
+        courses: COLLEGES_COURSES['NBS'],
+        placements: COLLEGES_PLACEMENTS['NBS']
     }
 ];
 
