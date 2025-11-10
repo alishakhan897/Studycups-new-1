@@ -28,7 +28,7 @@ const AnimatedContainer: React.FC<{children: React.ReactNode, delay?: number, cl
 
 const StreamTag: React.FC<{ stream: string }> = ({ stream }) => {
     const colors: { [key: string]: string } = {
-        'Engineering': 'bg-blue-100 text-blue-800',
+        'Engineering': 'bg-[--primary-medium]/10 text-[--primary-dark]',
         'Medical': 'bg-green-100 text-green-800',
         'Management': 'bg-indigo-100 text-indigo-800',
         'Law': 'bg-yellow-100 text-yellow-800',
@@ -120,7 +120,7 @@ const HomePage: React.FC<HomePageProps> = ({ setView, colleges, onOpenApplyNow }
             name: 'Management',
             description: 'Lead organizations and shape the future of business.',
             icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>,
-            color: 'bg-blue-800',
+            color: 'bg-[--primary-dark]',
             courseCount: COURSE_STREAMS['Management'].length,
         },
         {
@@ -198,7 +198,7 @@ const HomePage: React.FC<HomePageProps> = ({ setView, colleges, onOpenApplyNow }
                         </h1>
                     </AnimatedContainer>
                     <AnimatedContainer delay={150}>
-                        <p className="mt-4 text-lg text-blue-200 max-w-2xl mx-auto">
+                        <p className="mt-4 text-lg text-white/80 max-w-2xl mx-auto">
                             Explore thousands of colleges and courses. Get started by searching below.
                         </p>
                     </AnimatedContainer>
@@ -339,7 +339,7 @@ const HomePage: React.FC<HomePageProps> = ({ setView, colleges, onOpenApplyNow }
                                 className={`px-5 py-2.5 md:px-6 md:py-3 font-semibold rounded-full text-sm md:text-base transition-all duration-300 shadow-sm transform hover:scale-105 ${
                                     selectedStream === stream
                                         ? 'bg-[--primary-medium] text-white shadow-lg'
-                                        : 'bg-white text-slate-700 hover:bg-blue-100'
+                                        : 'bg-white text-slate-700 hover:bg-[--primary-medium]/10'
                                 }`}
                             >
                                 {stream}
@@ -414,7 +414,7 @@ const HomePage: React.FC<HomePageProps> = ({ setView, colleges, onOpenApplyNow }
                      <div className="text-center mt-12">
                         <button 
                             onClick={() => setView({ page: 'exams' })}
-                            className="px-6 py-3 font-semibold text-[--primary-medium] border-2 border-[--primary-medium] rounded-lg hover:bg-blue-50 transition-all"
+                            className="px-6 py-3 font-semibold text-[--primary-medium] border-2 border-[--primary-medium] rounded-lg hover:bg-[--primary-medium]/10 transition-all"
                         >
                             Explore All Exams
                         </button>
@@ -473,7 +473,7 @@ const HomePage: React.FC<HomePageProps> = ({ setView, colleges, onOpenApplyNow }
                                     <div className="relative z-10 flex-grow flex flex-col">
                                         <img src={testimonial.avatarUrl} alt={testimonial.name} className="w-20 h-20 rounded-full mb-5 mx-auto ring-4 ring-white object-cover shadow-md" />
                                         <p className="font-medium text-lg text-slate-700 leading-relaxed flex-grow">"{testimonial.quote}"</p>
-                                        <div className="w-16 h-0.5 bg-blue-200 mx-auto my-6"></div>
+                                        <div className="w-16 h-0.5 bg-[--primary-medium]/30 mx-auto my-6"></div>
                                         <div className="mt-auto">
                                             <p className="font-bold text-slate-800 text-lg">{testimonial.name}</p>
                                             <p className="text-sm text-[--primary-medium] font-semibold">{testimonial.college}</p>
@@ -526,7 +526,7 @@ const HomePage: React.FC<HomePageProps> = ({ setView, colleges, onOpenApplyNow }
                      <div className="text-center mt-12">
                         <button 
                             onClick={() => setView({ page: 'blog' })}
-                            className="px-6 py-3 font-semibold text-[--primary-medium] border-2 border-[--primary-medium] rounded-lg hover:bg-blue-50 transition-all"
+                            className="px-6 py-3 font-semibold text-[--primary-medium] border-2 border-[--primary-medium] rounded-lg hover:bg-[--primary-medium]/10 transition-all"
                         >
                             Read More Articles
                         </button>

@@ -23,7 +23,7 @@ const AnimatedCard: React.FC<{children: React.ReactNode, delay: number}> = ({ ch
 
 const StreamTag: React.FC<{ stream: string }> = ({ stream }) => {
     const colors: { [key: string]: string } = {
-        'Engineering': 'bg-blue-100 text-blue-800',
+        'Engineering': 'bg-[--primary-medium]/10 text-[--primary-dark]',
         'Medical': 'bg-green-100 text-green-800',
         'Management': 'bg-indigo-100 text-indigo-800',
         'Law': 'bg-yellow-100 text-yellow-800',

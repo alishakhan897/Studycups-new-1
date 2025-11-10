@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import HomePage from './pages/HomePage';
@@ -23,6 +23,19 @@ function App() {
   const [compareList, setCompareList] = useState<number[]>([]);
   const [isApplyNowOpen, setIsApplyNowOpen] = useState(false);
   const [isAIAssistantOpen, setIsAIAssistantOpen] = useState(false);
+
+  // Ensure every page navigation starts at the top of the viewport
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [view.page]);
+
+  // Auto-open Apply form 2 seconds after site loads
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsApplyNowOpen(true);
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleCompareToggle = (id: number) => {
     setCompareList(prev =>

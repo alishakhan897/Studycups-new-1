@@ -32,7 +32,7 @@ const courseColors: { [key: string]: string } = {
     btech: 'bg-[--primary-medium]',
     mba: 'bg-[--primary-dark]',
     bba: 'bg-orange-500',
-    mca: 'bg-blue-700',
+    mca: 'bg-[--primary-dark]',
     mbbs: 'bg-green-600',
     llb: 'bg-yellow-600',
     bcom: 'bg-red-600',
@@ -73,42 +73,47 @@ const CoursesPage: React.FC<CoursesPageProps> = ({ setView }) => {
     }
 
     return (
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
-            <div className="text-center mb-12">
-                <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">Explore Top Courses</h1>
-                <p className="mt-4 text-lg text-slate-600 max-w-2xl mx-auto">
-                    Find the perfect program to kickstart your career. Search for a course below.
-                </p>
-                <div className="mt-8 max-w-2xl mx-auto relative">
-                    <span className="absolute inset-y-0 left-0 flex items-center pl-4">
-                        <svg className="w-5 h-5 text-gray-400" viewBox="0 0 24 24" fill="none">
-                            <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"></path>
-                        </svg>
-                    </span>
-                    <input
-                        type="text"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        placeholder="Search for B.Tech, MBA, Design..."
-                        className="w-full pl-12 pr-4 py-4 border-2 border-slate-200 rounded-full text-lg text-slate-700 focus:outline-none focus:ring-2 focus:ring-[--primary-medium] transition-all"
-                    />
+        <div>
+            {/* Hero */}
+            <div className="relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-r from-[--primary-dark] via-[--primary-medium] to-[--primary-medium]" />
+                <div className="relative container mx-auto px-4 sm:px-6 lg:px-8 py-14 text-white text-center">
+                    <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight drop-shadow-sm">Explore Top Courses</h1>
+                    <p className="mt-4 text-lg text-white/80 max-w-2xl mx-auto drop-shadow-sm">
+                        Find the perfect program to kickstart your career. Search for a course below.
+                    </p>
+                    <div className="mt-8 max-w-2xl mx-auto relative">
+                        <span className="absolute inset-y-0 left-0 flex items-center pl-4">
+                            <svg className="w-5 h-5 text-white/70" viewBox="0 0 24 24" fill="none">
+                                <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"></path>
+                            </svg>
+                        </span>
+                        <input
+                            type="text"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            placeholder="Search for B.Tech, MBA, Design..."
+                            className="w-full pl-12 pr-4 py-4 rounded-full text-lg text-slate-900 bg-white/95 backdrop-blur-sm shadow-lg focus:outline-none focus:ring-2 focus:ring-[--primary-medium]/40 border border-white/30"
+                        />
+                    </div>
                 </div>
             </div>
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
 
             {/* Filters Section */}
-            <div className="mb-12 space-y-6 bg-slate-50 p-6 rounded-2xl border">
+            <div className="mb-12 space-y-6 bg-white p-6 rounded-2xl border shadow-sm">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
                     <div>
                         <h3 className="font-bold text-lg text-slate-700 mb-3 text-center md:text-left">Filter by Stream</h3>
-                        <div className="flex flex-wrap justify-center md:justify-start gap-3">
+                        <div className="flex flex-wrap justify-center md:justify-start gap-2">
                             {streams.map(stream => (
                                 <button
                                     key={stream}
                                     onClick={() => setSelectedStream(stream)}
-                                    className={`px-4 py-2 font-semibold rounded-full text-sm transition-all duration-300 shadow-sm transform hover:scale-105 ${
+                                    className={`px-3.5 py-1.5 font-semibold rounded-full text-sm transition-all duration-300 border ${
                                         selectedStream === stream
-                                            ? 'bg-[--primary-medium] text-white shadow-lg'
-                                            : 'bg-white text-slate-700 hover:bg-blue-100'
+                                            ? 'bg-[--primary-medium] text-white border-[--primary-medium] shadow'
+                                            : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
                                     }`}
                                 >
                                     {stream}
@@ -118,15 +123,15 @@ const CoursesPage: React.FC<CoursesPageProps> = ({ setView }) => {
                     </div>
                      <div>
                         <h3 className="font-bold text-lg text-slate-700 mb-3 text-center md:text-left">Filter by Level</h3>
-                        <div className="flex flex-wrap justify-center md:justify-start gap-3">
+                        <div className="flex flex-wrap justify-center md:justify-start gap-2">
                             {levels.map(level => (
                                 <button
                                     key={level}
                                     onClick={() => setSelectedLevel(level)}
-                                    className={`px-4 py-2 font-semibold rounded-full text-sm transition-all duration-300 shadow-sm transform hover:scale-105 ${
+                                    className={`px-3.5 py-1.5 font-semibold rounded-full text-sm transition-all duration-300 border ${
                                         selectedLevel === level
-                                            ? 'bg-[--primary-medium] text-white shadow-lg'
-                                            : 'bg-white text-slate-700 hover:bg-blue-100'
+                                            ? 'bg-[--primary-medium] text-white border-[--primary-medium] shadow'
+                                            : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
                                     }`}
                                 >
                                     {level}
@@ -140,8 +145,9 @@ const CoursesPage: React.FC<CoursesPageProps> = ({ setView }) => {
                     <div className="text-center border-t pt-4">
                         <button 
                             onClick={handleClearFilters}
-                            className="text-slate-500 font-semibold hover:text-red-500 transition-colors"
+                            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-slate-600 font-semibold hover:text-red-600 hover:bg-red-50 transition-colors"
                         >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"/></svg>
                             Clear Filters
                         </button>
                     </div>
@@ -154,11 +160,11 @@ const CoursesPage: React.FC<CoursesPageProps> = ({ setView }) => {
                         <AnimatedContainer key={course.name} delay={index * 80}>
                             <div
                                 onClick={() => setView({ page: 'course-detail', courseName: course.courseLinkName })}
-                                className={`p-6 rounded-2xl shadow-lg hover:shadow-xl text-white flex flex-col h-full cursor-pointer group transform hover:-translate-y-2 transition-all duration-300 ${courseColors[course.icon]}`}
+                                className={`p-6 rounded-2xl text-white flex flex-col h-full cursor-pointer group transform hover:-translate-y-2 transition-all duration-300 ${courseColors[course.icon]} shadow-md hover:shadow-lg ring-1 ring-white/20 hover:ring-white/40`}
                             >
                                 <div className="flex justify-between items-start">
                                     <h2 className="text-4xl font-extrabold">{course.name}</h2>
-                                    <div className="p-3 bg-white/20 rounded-full">
+                                    <div className="p-3 bg-white/20 rounded-full ring-1 ring-white/30 group-hover:ring-white/50">
                                         {icons[course.icon]}
                                     </div>
                                 </div>
@@ -166,7 +172,7 @@ const CoursesPage: React.FC<CoursesPageProps> = ({ setView }) => {
                                 <div className="border-t border-white/30 my-4"></div>
                                 <p className="text-white/80 text-base flex-grow">{course.description}</p>
                                 <div className="mt-6 text-center">
-                                    <span className="font-semibold text-white group-hover:underline text-lg">
+                                    <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-white/10 hover:bg-white/20 font-semibold text-white text-lg">
                                         View Details &rarr;
                                     </span>
                                 </div>
@@ -180,6 +186,7 @@ const CoursesPage: React.FC<CoursesPageProps> = ({ setView }) => {
                     <p className="text-slate-500 mt-2">Try adjusting your filters or search term.</p>
                 </div>
             )}
+        </div>
         </div>
     );
 };

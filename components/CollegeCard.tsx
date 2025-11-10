@@ -61,7 +61,7 @@ const CollegeCard: React.FC<CollegeCardProps> = ({ college, setView, onCompareTo
 
                 <div className="mt-4 flex flex-wrap gap-2">
                     {college.highlights.slice(0, 3).map(highlight => (
-                        <span key={highlight} className="text-xs font-semibold bg-blue-100 text-blue-800 px-2.5 py-1 rounded-full">{highlight}</span>
+                        <span key={highlight} className="text-xs font-semibold bg-[--primary-medium]/10 text-[--primary-dark] px-2.5 py-1 rounded-full">{highlight}</span>
                     ))}
                 </div>
 
@@ -69,7 +69,7 @@ const CollegeCard: React.FC<CollegeCardProps> = ({ college, setView, onCompareTo
                      <div className="mt-6 border-t border-gray-100 pt-4 flex items-center justify-between gap-3">
                         <button
                             onClick={onOpenApplyNow}
-                            className="flex-1 text-center px-4 py-2.5 font-semibold text-[--primary-medium] bg-white rounded-lg border-2 border-[--primary-medium] hover:bg-blue-50 transition-all duration-300 whitespace-nowrap"
+                            className="flex-1 text-center px-4 py-2.5 font-semibold text-[--primary-medium] bg-white rounded-lg border-2 border-[--primary-medium] hover:bg-[--primary-medium]/10 transition-all duration-300 whitespace-nowrap"
                         >
                             Apply Now
                         </button>

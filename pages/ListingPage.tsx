@@ -179,7 +179,7 @@ const ListingPage: React.FC<ListingPageProps> = ({ setView, colleges, compareLis
             >
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-white text-center">
                     <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">Find Your Perfect College</h1>
-                    <p className="mt-4 text-lg text-blue-100 max-w-2xl mx-auto">
+                    <p className="mt-4 text-lg text-white/80 max-w-2xl mx-auto">
                         Use our advanced filters or ask our AI counselor to discover the best institution for you.
                     </p>
                     <button 

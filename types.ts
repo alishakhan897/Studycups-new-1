@@ -20,6 +20,7 @@ export interface College {
     id: number;
     name: string;
     location: string;
+    tagline?: string;
     rating: number;
     reviewCount: number;
     imageUrl: string;

@@ -45,7 +45,7 @@ const CountdownTimer: React.FC<{ targetDate: string }> = ({ targetDate }) => {
 
 const EventCard: React.FC<{ event: Event }> = ({ event }) => {
     const categoryColors: { [key in Event['category']]: string } = {
-        'Webinar': 'bg-blue-100 text-blue-800',
+        'Webinar': 'bg-[--primary-medium]/10 text-[--primary-dark]',
         'Workshop': 'bg-orange-100 text-orange-800',
         'College Fair': 'bg-green-100 text-green-800',
         'Deadline': 'bg-red-100 text-red-800',
@@ -94,7 +94,7 @@ const EventsPage: React.FC<EventsPageProps> = ({ setView }) => {
             <section className="bg-[--primary-dark] text-white py-20 rounded-b-3xl">
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
                     <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">Upcoming Educational Events</h1>
-                    <p className="mt-4 text-lg text-blue-100 max-w-3xl mx-auto">
+                    <p className="mt-4 text-lg text-white/80 max-w-3xl mx-auto">
                         Stay informed about webinars, workshops, college fairs, and important deadlines. Don't miss out on opportunities to advance your academic journey.
                     </p>
                 </div>

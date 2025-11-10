@@ -105,7 +105,7 @@ const ExamDetailPage: React.FC<ExamDetailPageProps> = ({ examId, setView }) => {
                 );
             case 'Important Dates':
                 return (
-                    <div className="bg-white p-8 rounded-2xl shadow-sm border">
+                    <div id="important-dates" className="bg-white p-8 rounded-2xl shadow-sm border">
                         <h3 className="text-3xl font-bold mb-6 text-slate-800">Important Dates</h3>
                         <div className="space-y-4">
                             {exam.importantDates.map(item => (
@@ -148,17 +148,25 @@ const ExamDetailPage: React.FC<ExamDetailPageProps> = ({ examId, setView }) => {
     return (
         <div className="bg-slate-50">
             {/* Hero Banner */}
-            <div className="bg-[--primary-dark] text-white">
-                 <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16">
-                     <button onClick={() => setView({ page: 'exams' })} className="mb-4 text-sm font-semibold text-blue-200 hover:underline">
-                        &larr; Back to All Exams
+            <div className="relative overflow-hidden text-white">
+                <div className="absolute inset-0 bg-gradient-to-r from-[--primary-dark] via-[--primary-medium] to-[--primary-medium]" />
+                <div className="relative container mx-auto px-4 sm:px-6 lg:px-8 py-14">
+                    <button onClick={() => setView({ page: 'exams' })} className="mb-4 inline-flex items-center gap-2 text-sm font-semibold hover:opacity-90">
+                        <span className="inline-block rounded bg-white/10 px-2 py-1">←</span>
+                        Back to All Exams
                     </button>
-                    <div className="flex items-center space-x-8">
-                        <img src={exam.logoUrl} alt={`${exam.name} logo`} className="h-28 w-28 rounded-full bg-white p-2 shadow-lg" />
+                    <div className="flex items-center gap-6">
+                        <img src={exam.logoUrl} alt={`${exam.name} logo`} className="h-24 w-24 sm:h-28 sm:w-28 rounded-full bg-white p-2 shadow-lg" />
                         <div>
-                            <h1 className="text-5xl font-extrabold tracking-tight">{exam.name}</h1>
-                            <p className="mt-2 text-xl text-slate-200">Conducted by: {exam.conductingBody}</p>
+                            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight drop-shadow-sm">{exam.name}</h1>
+                            <p className="mt-2 text-base sm:text-lg text-white/80 drop-shadow-sm">Conducted by: {exam.conductingBody}</p>
                         </div>
+                    </div>
+                    {/* Quick CTAs */}
+                    <div className="mt-8 flex flex-wrap gap-3">
+                        <a href="#" className="rounded-md bg-white/10 px-4 py-2 text-sm font-semibold hover:bg-white/20">Application Guide</a>
+                        <a href="#" className="rounded-md bg-white/10 px-4 py-2 text-sm font-semibold hover:bg-white/20">Download Syllabus</a>
+                        <a href="#important-dates" className="rounded-md bg-white/10 px-4 py-2 text-sm font-semibold hover:bg-white/20">Important Dates</a>
                     </div>
                 </div>
             </div>
@@ -166,15 +174,15 @@ const ExamDetailPage: React.FC<ExamDetailPageProps> = ({ examId, setView }) => {
             {/* Sticky Tabs */}
             <div className="sticky top-[80px] z-30 bg-white/95 backdrop-blur-md shadow-sm border-b">
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex items-center space-x-2 sm:space-x-4 py-2">
+                    <div className="flex items-center flex-wrap gap-2 sm:gap-3 py-2">
                         {tabs.map(tab => (
                             <button
                                 key={tab}
                                 onClick={() => setActiveTab(tab)}
-                                className={`py-2.5 px-4 sm:px-6 font-semibold rounded-full text-sm sm:text-base transition-all duration-300 ${
+                                className={`py-2 px-4 sm:px-6 font-semibold rounded-full text-sm sm:text-base transition-all duration-300 ${
                                     activeTab === tab 
                                         ? 'bg-[--primary-medium] text-white shadow' 
-                                        : 'text-slate-600 hover:bg-blue-100 hover:text-[--primary-medium]'
+                                        : 'text-slate-700 hover:bg-[--primary-medium]/10 hover:text-[--primary-medium]'
                                 }`}
                             >
                                 {tab}
@@ -184,9 +192,51 @@ const ExamDetailPage: React.FC<ExamDetailPageProps> = ({ examId, setView }) => {
                 </div>
             </div>
 
-            {/* Content */}
+            {/* Content with Sidebar */}
             <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
-                {renderTabContent()}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    {/* Main */}
+                    <div className="lg:col-span-2 space-y-6">
+                        {renderTabContent()}
+                    </div>
+                    {/* Sidebar */}
+                    <aside className="space-y-6">
+                        {/* Quick Info */}
+                        <div className="bg-white rounded-xl shadow-sm border p-6">
+                            <h3 className="text-lg font-bold mb-4">Quick Info</h3>
+                            <div className="space-y-3 text-sm text-slate-700">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-slate-500">Stream</span>
+                                    <span className="font-semibold">{exam.stream}</span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <span className="text-slate-500">Conducting Body</span>
+                                    <span className="font-semibold">{exam.conductingBody}</span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <span className="text-slate-500">Exam Date</span>
+                                    <span className="font-semibold text-[--primary-medium]">{exam.date}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Upcoming Dates */}
+                        <div className="bg-white rounded-xl shadow-sm border p-6">
+                            <h3 className="text-lg font-bold mb-4">Upcoming Dates</h3>
+                            <ul className="space-y-3">
+                                {exam.importantDates.slice(0, 3).map((d) => (
+                                    <li key={d.event} className="flex items-center justify-between">
+                                        <span className="text-slate-700">{d.event}</span>
+                                        <span className="font-semibold text-[--primary-medium]">{d.date}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                            <a href="#important-dates" className="mt-4 inline-flex items-center justify-center rounded-md border px-3 py-1.5 text-sm font-semibold hover:bg-slate-50">
+                                View all dates
+                            </a>
+                        </div>
+                    </aside>
+                </div>
             </div>
         </div>
     );

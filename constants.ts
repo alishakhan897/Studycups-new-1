@@ -6,7 +6,7 @@ export const POPULAR_COURSES_DATA = [
         fullName: 'Bachelor of Technology',
         description: 'Forge the future with core engineering principles and cutting-edge tech.',
         icon: 'btech',
-        color: 'from-blue-500 to-indigo-600',
+        color: 'from-[--primary-dark] to-[--primary-medium]',
         stream: 'Engineering',
         level: 'Undergraduate',
         courseLinkName: 'B.Tech in Computer Science'
@@ -36,7 +36,7 @@ export const POPULAR_COURSES_DATA = [
         fullName: 'Master of Computer Applications',
         description: 'Master the world of software development and advanced computing applications.',
         icon: 'mca',
-        color: 'from-sky-500 to-cyan-600',
+        color: 'from-[--primary-medium] to-[--primary-dark]',
         stream: 'Engineering',
         level: 'Postgraduate',
         courseLinkName: 'B.Tech in Computer Science'
@@ -150,7 +150,7 @@ const COLLEGES_PLACEMENTS: { [key: string]: Placements } = {
 export const COLLEGES_DATA: College[] = [
     {
         id: 1, name: 'Indian Institute of Technology, Delhi', location: 'New Delhi, Delhi', rating: 4.8, reviewCount: 1250,
-        imageUrl: 'https://images.unsplash.com/photo-1622397333335-e6de182a5273?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+        imageUrl: '/images/IIt delhi image.jpg',
         logoUrl: 'https://upload.wikimedia.org/wikipedia/en/thumb/f/fd/Indian_Institute_of_Technology_Delhi_Logo.svg/1200px-Indian_Institute_of_Technology_Delhi_Logo.svg.png',
         established: 1961, type: 'Government', accreditation: ['NAAC A++', 'NIRF'],
         description: 'IIT Delhi is one of the most prestigious engineering institutions in India, known for its rigorous academic programs and cutting-edge research.',
@@ -172,7 +172,7 @@ export const COLLEGES_DATA: College[] = [
     },
     {
         id: 3, name: 'All India Institute of Medical Sciences, Delhi', location: 'New Delhi, Delhi', rating: 4.9, reviewCount: 980,
-        imageUrl: 'https://images.unsplash.com/photo-1584982235211-807e3739a834?q=80&w=1925&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+        imageUrl: '/images/Aiims delhi.jpg',
         logoUrl: 'https://www.aiims.edu/images/logo-hindi-eng.png',
         established: 1956, type: 'Government', accreditation: ['MCI'],
         description: 'AIIMS Delhi is the premier medical college and hospital in India, consistently ranked as the top medical institution for its exceptional clinical care and research.',
@@ -183,7 +183,7 @@ export const COLLEGES_DATA: College[] = [
     },
     {
         id: 4, name: 'Indian Institute of Management Bangalore', location: 'Bengaluru, Karnataka', rating: 4.7, reviewCount: 850,
-        imageUrl: 'https://images.unsplash.com/photo-1593348987445-96f1a415a772?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+        imageUrl: '/images/iim benglore.jpg',
         logoUrl: 'https://www.iimb.ac.in/themes/custom/iimb/logo.svg',
         established: 1973, type: 'Government', accreditation: ['EQUIS', 'AMBA'],
         description: 'IIM Bangalore is a leading graduate school of management in Asia, recognized for its excellence in management education and research.',
@@ -194,7 +194,7 @@ export const COLLEGES_DATA: College[] = [
     },
     {
         id: 5, name: 'National Law School of India University', location: 'Bengaluru, Karnataka', rating: 4.6, reviewCount: 600,
-        imageUrl: 'https://images.unsplash.com/photo-1589994965851-a8f8bf2c53a2?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D',
+        imageUrl: '/images/nationa law school.jpg',
         logoUrl: 'https://www.nls.ac.in/wp-content/uploads/2021/07/NLS-Logo-Navbar.png',
         established: 1986, type: 'Government', accreditation: ['BCI'],
         description: 'NLSIU is the top-ranked law university in India, pioneering legal education and setting standards for law schools across the country.',
@@ -207,6 +207,7 @@ export const COLLEGES_DATA: College[] = [
         id: 6,
         name: 'Asian Business School (ABS), Noida',
         location: 'Noida, Uttar Pradesh',
+        tagline: 'AICTE-approved PGDM with UK study tour and 550+ recruiters',
         rating: 4.4,
         reviewCount: 720,
         imageUrl: '/images/ABS.jpg',
@@ -232,6 +233,7 @@ export const COLLEGES_DATA: College[] = [
         id: 7,
         name: 'Bennett University, Greater Noida',
         location: 'Greater Noida, Uttar Pradesh',
+        tagline: 'Times Group university with industry-led MBA programs',
         rating: 4.6,
         reviewCount: 950,
         imageUrl: '/images/Bennett.jpg',
@@ -256,6 +258,7 @@ export const COLLEGES_DATA: College[] = [
         id: 8,
         name: 'Narayana Business School (NBS), Ahmedabad',
         location: 'Ahmedabad, Gujarat',
+        tagline: 'Known for PGDM programs and strong 100% placements',
         rating: 4.5,
         reviewCount: 680,
         imageUrl: '/logos/NBS.jpg',
