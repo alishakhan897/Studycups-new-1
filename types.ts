@@ -93,3 +93,21 @@ export interface Event {
     imageUrl: string;
     link: string;
 }
+
+export interface FormData {
+  studyLocation: string[];
+  studentName: string;
+  gender: string;
+  mobileNumber: string;
+  whatsappNumber: string;
+  parentMobileNumber: string;
+  email: string;
+  city: string;
+  courses: string[];
+  event: string;
+  referral1Name: string;
+  referral1Mobile: string;
+  referral2Name: string;
+  referral2Mobile: string;
+  source: string;
+}
