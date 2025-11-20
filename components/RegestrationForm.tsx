@@ -272,10 +272,10 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit }) => {
 
   return (
     <div className="bg-white p-6 sm:p-8 rounded-lg shadow-lg">
-      {/* HEADER */}
+      
       <div className="text-center mb-8">
         <div className="mx-auto h-15 w-16">
-          {/* LogoIcon कंपोनेंट या img टैग */}
+         
           <img
             src="/logos/StudyCups.png"
             alt="StudyCups Education"
