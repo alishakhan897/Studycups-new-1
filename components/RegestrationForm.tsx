@@ -136,7 +136,7 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit }) => {
   const handleChange = (e: ChangeEvent<any>) => {
     const { name, value } = e.target;
 
-    setFormData((prev) => ({ ...prev, [name]: value.trim() }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
 
     let errorMsg = "";
 
