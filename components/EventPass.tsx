@@ -18,9 +18,11 @@ const EventPass: React.FC<EventPassProps> = ({ name, selectedEvent }) => {
   } else {
     setRegNumber(`LKO${randomNum}`);
   }
+
+
 }, [selectedEvent]);
 
-// ⭐ Scroll to top when EventPass opens
+
 useEffect(() => {
   window.scrollTo({ top: 0, behavior: "smooth" });
 }, []);
