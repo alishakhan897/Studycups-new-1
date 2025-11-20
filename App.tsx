@@ -34,11 +34,11 @@ function App() {
   const [selectedEvent, setSelectedEvent] =
     useState<"kanpur" | "lucknow">("kanpur");
 
-  // 🔥 Final working function (Name + Event receive)
+  
   const handleFormSubmit = (name: string, event: string) => {
     setStudentName(name);
     setSelectedEvent(event === "kanpur" ? "kanpur" : "lucknow");
-    setIsSubmitted(true);     // <- SHOW EVENT PASS PAGE
+    setIsSubmitted(true);    
   };
 
   const renderContent = () => {
@@ -99,7 +99,7 @@ function App() {
         <Routes>
           <Route path="/" element={renderContent()} />
 
-          {/* 🔥 FINAL REGISTRATION + EVENT PASS ROUTE */}
+        
           <Route
             path="/register"
             element={

@@ -89,7 +89,7 @@ useEffect(() => {
         </div>
       </div>
 
-      {/* 📥 Download Button */}
+    
       <button
         onClick={downloadPass}
         className="mt-4 bg-blue-600 text-white px-5 py-2 rounded-lg font-semibold shadow-md active:scale-95"
