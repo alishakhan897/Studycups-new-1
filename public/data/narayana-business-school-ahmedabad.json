@@ -1,6 +1,15 @@
 {
-  "overview": "Narayana Business School (NBS) Ahmedabad is an AICTE-approved management institute known for its PGDM and MBA programs, industry-driven pedagogy, and strong placement support. NBS emphasizes practical learning, corporate exposure, and skill development.
-  ",
+  "overview": "Narayana Business School (NBS) Ahmedabad is an AICTE-approved management institute known for its PGDM and MBA programs, industry-driven pedagogy, and strong placement support. NBS emphasizes practical learning, corporate exposure, and skill development.",
+  "location": {
+    "address": "Narayana Business School, Near Iskcon Temple, S.G. Highway, Ahmedabad, Gujarat, India",
+    "city": "Ahmedabad",
+    "state": "Gujarat",
+    "country": "India",
+    "coordinates": {
+      "latitude": 23.0731,
+      "longitude": 72.5164
+    }
+  },
   "courses": [
     {
       "name": "PGDM (Dual Specialization)",
