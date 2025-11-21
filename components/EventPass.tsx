@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from "react";
 import { toPng } from "html-to-image";
 import { saveAs } from "file-saver";
@@ -19,10 +20,10 @@ const EventPass: React.FC<EventPassProps> = ({ name, selectedEvent }) => {
     setRegNumber(`LKO${randomNum}`);
   }
 
-  
+
 }, [selectedEvent]);
 
-// ⭐ Scroll to top when EventPass opens
+
 useEffect(() => {
   window.scrollTo({ top: 0, behavior: "smooth" });
 }, []);
@@ -54,7 +55,7 @@ useEffect(() => {
         className="relative w-full max-w-[420px] mx-auto"
         style={{
           backgroundImage: `url('${bgImage}')`,
-          backgroundSize: "cover",
+          backgroundSize: "contain",
           backgroundRepeat: "no-repeat",
           backgroundPosition: "top center",
           width: "100%",
