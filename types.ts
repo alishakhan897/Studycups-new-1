@@ -48,7 +48,7 @@ export type View =
   | { page: 'events' }
   | { page: 'detail', collegeId: number }
   | { page: 'blog-detail', postId: number }
-  | { page: 'course-detail', courseName: string }
+  | { page: 'course-detail', courseId: number }
   | { page: 'exam-detail', examId: number };
 
 

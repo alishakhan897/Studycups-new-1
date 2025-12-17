@@ -1,8 +1,7 @@
 import React, { useState, ChangeEvent, FormEvent } from "react";
 import type { FormData } from "../types";
-import { LogoIcon } from "./icons/LogoIcon";
 
-// सुनिश्चित करें कि यह इंटरफ़ेस दो पैरामीटर लेता है
+
 interface RegistrationFormProps {
   onSubmit: (name: string, event: string) => void;
 }
@@ -25,7 +24,7 @@ const initialFormData: FormData = {
   source: "",
 };
 
-// InputField कंपोनेंट (कोई बदलाव नहीं)
+
 const InputField: React.FC<{
   id: keyof FormData | string;
   label: string;
@@ -222,12 +221,12 @@ const RegistrationForm: React.FC<RegistrationFormProps> = ({ onSubmit }) => {
       const data = await res.json();
       console.log("Server Response:", data);
 
-      // 1. Backend Response (Status) की जाँच करें
+     
       if (!res.ok) {
         if (res.status === 400 && data.message.includes("registered")) {
 
           if (data.message.includes("Mobile")) {
-            // mobile number duplicate
+         
             setErrors({ mobileNumber: data.message });
           }
 

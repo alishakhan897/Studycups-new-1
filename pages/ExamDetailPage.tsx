@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState , useEffect } from 'react';
 import { EXAMS_DATA } from '../constants';
 import type { View } from '../types';
 
@@ -8,10 +8,34 @@ interface ExamDetailPageProps {
 }
 
 const ExamDetailPage: React.FC<ExamDetailPageProps> = ({ examId, setView }) => {
-    const exam = EXAMS_DATA.find(e => e.id === examId);
+    const [exam, setExam] = useState<any>(null);
     const [activeTab, setActiveTab] = useState('Overview');
+    const [loading, setLoading] = useState(true);
     
-    const tabs = ['Overview', 'Eligibility', 'Syllabus', 'Important Dates'];
+    const tabs = ['Overview', 'Eligibility', 'Syllabus', 'Important Dates']; 
+
+    useEffect(() => {
+        const fetchExam = async () => {
+            try {
+                const res = await fetch(`http://localhost:5000/api/exams/${examId}`);
+                const json = await res.json();
+
+                if (json.success) {
+                    setExam(json.data);
+                }
+                setLoading(false);
+            } catch (err) {
+                console.error("Exam API Error:", err);
+                setLoading(false);
+            }
+        };
+
+        fetchExam();
+    }, [examId]);
+
+    if (loading) {
+        return <p className="text-center p-20 text-lg">Loading exam details...</p>;
+    }
 
     if (!exam) {
         return (
@@ -148,7 +172,7 @@ const ExamDetailPage: React.FC<ExamDetailPageProps> = ({ examId, setView }) => {
     return (
         <div className="bg-slate-50">
             {/* Hero Banner */}
-            <div className="relative overflow-hidden text-white">
+            <div className="relative overflow-hidden text-white py-24">
                 <div className="absolute inset-0 bg-gradient-to-r from-[--primary-dark] via-[--primary-medium] to-[--primary-medium]" />
                 <div className="relative container mx-auto px-4 sm:px-6 lg:px-8 py-14">
                     <button onClick={() => setView({ page: 'exams' })} className="mb-4 inline-flex items-center gap-2 text-sm font-semibold hover:opacity-90">
@@ -231,9 +255,7 @@ const ExamDetailPage: React.FC<ExamDetailPageProps> = ({ examId, setView }) => {
                                     </li>
                                 ))}
                             </ul>
-                            <a href="#important-dates" className="mt-4 inline-flex items-center justify-center rounded-md border px-3 py-1.5 text-sm font-semibold hover:bg-slate-50">
-                                View all dates
-                            </a>
+                           
                         </div>
                     </aside>
                 </div>

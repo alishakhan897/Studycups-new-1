@@ -1,80 +1,261 @@
-import React from 'react';
-import { EXAMS_DATA } from '../constants';
-import type { View } from '../types';
-import { useOnScreen } from '../hooks/useOnScreen';
+import React, { useEffect, useState, useMemo } from "react";
+import type { View } from "../types";
+import { useOnScreen } from "../hooks/useOnScreen";
 
 interface ExamsPageProps {
-    setView: (view: View) => void;
+  setView: (view: View) => void;
 }
 
-const AnimatedCard: React.FC<{children: React.ReactNode, delay: number}> = ({ children, delay }) => {
-    // Fix: Removed 'triggerOnce' as it's not a valid property for IntersectionObserverInit. The hook's implementation already ensures it triggers once.
-    const [ref, isVisible] = useOnScreen<HTMLDivElement>({ threshold: 0.1 });
-    return (
-        <div
-            ref={ref}
-            className={`opacity-0 ${isVisible ? 'animate-fadeInUp' : ''}`}
-            style={{ animationDelay: `${delay}ms` }}
-        >
-            {children}
-        </div>
-    );
-};
+const AnimatedCard: React.FC<{ children: React.ReactNode; delay: number }> = ({
+  children,
+  delay,
+}) => {
+  const [ref, isVisible] = useOnScreen<HTMLDivElement>({ threshold: 0.1 });
 
-const StreamTag: React.FC<{ stream: string }> = ({ stream }) => {
-    const colors: { [key: string]: string } = {
-        'Engineering': 'bg-[--primary-medium]/10 text-[--primary-dark]',
-        'Medical': 'bg-green-100 text-green-800',
-        'Management': 'bg-indigo-100 text-indigo-800',
-        'Law': 'bg-yellow-100 text-yellow-800',
-        'Civil Services': 'bg-red-100 text-red-800',
-    };
-    const colorClass = colors[stream] || 'bg-slate-100 text-slate-800';
-    return (
-        <div className={`absolute top-4 right-4 text-xs font-bold px-2.5 py-1 rounded-full ${colorClass}`}>
-            {stream}
-        </div>
-    );
+  return (
+    <div
+      ref={ref}
+      className={`opacity-0 ${isVisible ? "animate-fadeInUp" : ""}`}
+      style={{ animationDelay: `${delay}ms` }}
+    >
+      {children}
+    </div>
+  );
 };
 
 const ExamsPage: React.FC<ExamsPageProps> = ({ setView }) => {
-    return (
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
-            <div className="text-center mb-12">
-                <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">Entrance Exams 2024-2025</h1>
-                <p className="mt-4 text-lg text-slate-600 max-w-2xl mx-auto">
-                    Find all the information you need about popular entrance exams for various courses.
+  const [exams, setExams] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("All");
+
+  useEffect(() => {
+    const fetchExams = async () => {
+      try {
+        const res = await fetch("http://localhost:5000/api/exams");
+        const json = await res.json();
+        setExams(json.data || []);
+      } catch (err) {
+        console.error("Exam API Error:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchExams();
+  }, []);
+
+  const filteredExams = useMemo(() => {
+    return exams.filter((exam) => {
+      const matchesSearch =
+        searchTerm.trim() === "" ||
+        exam.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        exam.conductingBody?.toLowerCase().includes(searchTerm.toLowerCase());
+
+      const matchesCategory =
+        selectedCategory === "All" ||
+        exam.stream === selectedCategory;
+
+      return matchesSearch && matchesCategory;
+    });
+  }, [exams, searchTerm, selectedCategory]);
+
+  const examCategories = useMemo(() => {
+  const set = new Set<string>();
+
+  exams.forEach((exam) => {
+    if (exam.stream && typeof exam.stream === "string") {
+      set.add(exam.stream.trim());
+    }
+  });
+
+  return ["All", ...Array.from(set)];
+}, [exams]);
+
+
+  if (loading) {
+    return <p className="text-center p-10">Loading Exams...</p>;
+  }
+
+  return (
+    <div className="bg-[#f2f4f7] pt-24 pb-16">
+      <div className="max-w-7xl mx-auto px-4">
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+          {/* ================= LEFT CONTENT ================= */}
+          <div className="lg:col-span-9 space-y-6">
+
+            {/* HEADER */}
+            <div className="relative bg-[#eef3fb] rounded-lg p-6 overflow-hidden">
+              <div className="relative z-10 max-w-[520px]">
+                <h1 className="text-[28px] font-bold text-slate-900">
+                  Entrance Exams in India
+                </h1>
+                <p className="text-sm text-slate-600 mt-1">
+                  Explore all national & state level entrance exams
                 </p>
+              </div>
+
+              <img
+                src="/icons/college entrance exam-bro.png"
+                alt=""
+                className="
+                  absolute right-6 top-1/2 -translate-y-1/2
+                  h-[360px] w-auto
+                  hidden md:block pointer-events-none
+                "
+              />
             </div>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                {EXAMS_DATA.map((exam, index) => (
-                    <AnimatedCard key={exam.id} delay={index * 100}>
-                        <div 
-                            className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 overflow-hidden group cursor-pointer h-full flex flex-col border"
-                            onClick={() => setView({ page: 'exam-detail', examId: exam.id })}
-                        >
-                            <div className="p-6 relative">
-                                <StreamTag stream={exam.stream} />
-                                <img src={exam.logoUrl} alt={`${exam.name} logo`} className="h-20 w-20 rounded-full flex-shrink-0 bg-slate-100 p-2" />
-                            </div>
-                            <div className="p-6 pt-0 flex flex-col flex-grow">
-                                <h2 className="text-2xl font-bold text-slate-800">{exam.name}</h2>
-                                <p className="text-sm text-slate-500 mt-1 flex-grow">{exam.conductingBody}</p>
-                                <div className="mt-6 border-t pt-4">
-                                    <p className="text-xs font-semibold text-slate-400">EXAM DATE</p>
-                                    <p className="font-bold text-[--primary-medium] text-lg">{exam.date}</p>
-                                </div>
-                            </div>
-                            <div className="bg-slate-50 group-hover:bg-[--primary-medium] p-4 text-center font-semibold text-[--primary-medium] group-hover:text-white transition-all duration-300">
-                                View Details &rarr;
-                            </div>
-                        </div>
-                    </AnimatedCard>
-                ))}
+
+            {/* SEARCH */}
+            <div className="bg-white rounded-lg p-4 border">
+              <input
+                placeholder="Search Entrance Exams"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="
+                  w-full px-4 py-3 border rounded-md text-sm
+                  focus:ring-2 focus:ring-blue-400 outline-none
+                "
+              />
             </div>
+
+            {/* CATEGORIES */}
+            <div className="bg-white rounded-lg p-4 border">
+              <h3 className="font-semibold text-slate-800 mb-3">
+                Exams Category
+              </h3>
+
+            <div className="bg-white rounded-lg p-4 border">
+  <h3 className="font-semibold text-slate-800 mb-3">
+    Exams Category
+  </h3>
+
+  <div className="flex flex-wrap gap-2">
+    {examCategories.map((cat) => (
+      <button
+        key={cat}
+        onClick={() => setSelectedCategory(cat)}
+        className={`
+          px-4 py-1.5 text-sm rounded-full transition
+          ${
+            selectedCategory === cat
+              ? "bg-orange-500 text-white"
+              : "bg-slate-100 text-slate-700 hover:bg-orange-100 hover:text-orange-700"
+          }
+        `}
+      >
+        {cat}
+      </button>
+    ))}
+  </div>
+</div>
+
+            </div>
+
+            {/* EXAMS LIST */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {filteredExams.map((exam, index) => (
+                <AnimatedCard key={exam.id} delay={index * 60}>
+                  <div
+                    onClick={() =>
+                      setView({ page: "exam-detail", examId: exam.id })
+                    }
+                    className="
+                      bg-white border rounded-lg p-4
+                      hover:shadow-md transition cursor-pointer
+                    "
+                  >
+                    <div className="flex items-start gap-3">
+                      <img
+                        src={exam.logoUrl}
+                        alt=""
+                        className="h-12 w-12 object-contain"
+                      />
+
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-slate-900 text-sm">
+                          {exam.name}
+                        </h4>
+                        <p className="text-xs text-slate-600">
+                          {exam.conductingBody}
+                        </p>
+                      </div>
+
+                      <span className="text-xs px-2 py-1 rounded bg-slate-100">
+                        {exam.mode || "Online"}
+                      </span>
+                    </div>
+
+                    <div className="mt-3 grid grid-cols-2 text-sm text-slate-600">
+                      <span>Exam Date</span>
+                      <span className="font-medium text-right">
+                        {exam.date || "TBA"}
+                      </span>
+
+                      <span>Application</span>
+                      <span className="font-medium text-right">
+                        Available
+                      </span>
+                    </div>
+
+                    <div className="mt-3 flex justify-between text-sm text-blue-600 font-medium">
+                      <span>Application Process</span>
+                      <span>Exam Pattern</span>
+                    </div>
+
+                    <button
+                      className="
+                        mt-4 text-sm px-4 py-1.5
+                        border border-[#0F2D52]-500
+                        text-[#0F2D52]-600 rounded
+                        hover:bg-orange-50
+                      "
+                    >
+                      Apply Now
+                    </button>
+                  </div>
+                </AnimatedCard>
+              ))}
+            </div>
+          </div>
+
+          {/* ================= RIGHT SIDEBAR ================= */}
+          <aside className="lg:col-span-3 space-y-6 sticky top-28 h-fit">
+
+            <div className="bg-white border rounded-lg p-4">
+              <h3 className="font-semibold mb-3">Exams News</h3>
+              <div className="space-y-3 text-sm text-slate-700">
+                <p>CAT 2025 Percentile vs Score</p>
+                <p>XAT Admit Card 2026 Released</p>
+                <p>JEE Main 2026 Dates Announced</p>
+              </div>
+            </div>
+
+            <div className="bg-[#0F2D52]-50 border border-[#0F2D52]-200 rounded-lg p-4">
+              <h3 className="font-semibold text-white-200">
+                Subscribe to our Newsletter
+              </h3>
+              <button className="mt-4 w-full bg-[#0F2D52] text-white py-2 rounded">
+                Subscribe Now
+              </button>
+            </div>
+
+            <div className="bg-white border rounded-lg p-4">
+              <h3 className="font-semibold mb-3">Upcoming Exams</h3>
+              <ul className="space-y-2 text-sm text-slate-700">
+                <li>JEE Advanced 2025</li>
+                <li>TS EAMCET 2025</li>
+                <li>GATE 2026</li>
+              </ul>
+            </div>
+
+          </aside>
         </div>
-    );
+      </div>
+    </div>
+  );
 };
 
 export default ExamsPage;

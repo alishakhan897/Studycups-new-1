@@ -1,193 +1,179 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { Link, useNavigate, useLocation } from "react-router-dom";
-import type { View, College } from '../types';
+import React, { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import type { View, College } from "../types";
+
+
 
 interface HeaderProps {
-    setView: (view: View) => void;
-    onOpenApplyNow: () => void;
-    colleges: College[];
+  setView: (view: View) => void;
+  onOpenApplyNow: () => void;
+  colleges: College[];
+  view: View;
 }
 
-const Header: React.FC<HeaderProps> = ({ setView, onOpenApplyNow, colleges }) => {
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const [searchQuery, setSearchQuery] = useState('');
-    const [isSearchOpen, setIsSearchOpen] = useState(false);
-    const searchRef = useRef<HTMLDivElement>(null);
+const Header: React.FC<HeaderProps> = ({ setView, onOpenApplyNow, view }) => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const activePage = location.pathname === "/" ? view?.page : location.pathname;
 
-    const navigate = useNavigate();
-    const location = useLocation();
 
-    // Check if on /register route
-    const isRegisterRoute = location.pathname === "/register";
+  const tabClass = (tab: string) =>
+    `relative pb-1 transition ${activePage === tab
+      ? "text-[#0F2D52] font-bold after:absolute after:left-0 after:bottom-0 after:h-[2px] after:w-full after:bg-[#0F2D52]"
+      : "text-[#0F2D52] hover:text-[#062042]"
+    }`;
 
-    const navLinks = [
-        { name: 'Home', view: { page: 'home' } as const },
-        { name: 'Colleges', view: { page: 'listing' } as const },
-        { name: 'Courses', view: { page: 'courses' } as const },
-        { name: 'Exams', view: { page: 'exams' } as const },
-        { name: 'Events', view: { page: 'events' } as const },
-        { name: 'Blog', view: { page: 'blog' } as const },
-        { name: 'Compare', view: { page: 'compare' } as const },
-    ];
 
-    // Search results logic
-    const searchResults = useMemo(() => {
-        if (!searchQuery.trim()) return [];
-        return colleges
-            .filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase()))
-            .slice(0, 5);
-    }, [searchQuery, colleges]);
+  const handleNavClick = (view: View) => {
+    navigate("/");
+    setTimeout(() => setView(view), 20);
+  };
 
-    // Close search dropdown on outside click
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
-                setIsSearchOpen(false);
-            }
-        };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
+  return (
+    <header className="fixed top-0 left-0 right-0 z-50 bg-[#1E4A7A]  shadow-md rounded-bl-[10px] rounded-br-[10px]">
 
-    // On clicking search result item
-    const handleResultClick = (collegeId: number) => {
-        navigate("/");
-        setView({ page: 'detail', collegeId });
-        setSearchQuery('');
-        setIsSearchOpen(false);
-    };
+      {/* WRAPPER (fixed for mobile) */}
+      <div className="max-w-9xl mx-auto px-3 py-2 ">
 
-    // Navigation click handler (main fix)
-    const handleNavClick = (view: View) => {
-        if (isRegisterRoute) {
-            // If on /register route, move to homepage and then let App.tsx handle view
-            navigate("/");
-            setTimeout(() => setView(view), 50);
-        } else {
-            setView(view);
-        }
-    };
+        {/* TOP BAR */}
+        <div
+          className="
+    bg-white
+    w-full 
+    flex items-center justify-between
+    
+    px-3 py-1         /* Smaller padding on mobile */
+    rounded-xl        /* Smaller curve on mobile */
 
-    return (
-        <header className="bg-white shadow-sm sticky top-0 z-40 border-b border-slate-200/80">
-            <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex items-center justify-between h-20">
+    md:px-6 md:py-2   /* Normal size on desktop */
+    md:rounded-10px   /* Fully rounded on desktop */
+  "
+        >
 
-                    {/* Logo */}
-                    <div className="flex items-center">
-                        <img
-                            src="/logos/StudyCups.png"
-                            alt="StudyCups Education"
-                            className="h-10 w-auto cursor-pointer select-none"
-                            onClick={() => handleNavClick({ page: 'home' })}
-                        />
-                    </div>
 
-                    {/* Search Bar (Desktop) */}
-                    <div ref={searchRef} className="relative hidden lg:block flex-1 max-w-xl mx-8">
-                        <div className="relative">
-                            <span className="absolute inset-y-0 left-0 flex items-center pl-3">
-                                <svg className="w-5 h-5 text-gray-400" viewBox="0 0 24 24" fill="none">
-                                    <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                                        stroke="currentColor" strokeWidth="2"
-                                        strokeLinecap="round" strokeLinejoin="round"></path>
-                                </svg>
-                            </span>
-                            <input
-                                type="text"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                onFocus={() => setIsSearchOpen(true)}
-                                placeholder="Search for colleges..."
-                                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-full text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[--primary-medium] transition-all"
-                            />
-                        </div>
 
-                        {isSearchOpen && searchResults.length > 0 && (
-                            <div className="absolute mt-2 w-full bg-white rounded-xl shadow-lg border border-gray-100 z-50">
-                                <ul className="py-2">
-                                    {searchResults.map(college => (
-                                        <li
-                                            key={college.id}
-                                            onClick={() => handleResultClick(college.id)}
-                                            className="px-4 py-3 cursor-pointer hover:bg-slate-50"
-                                        >
-                                            <p className="font-semibold text-slate-800">{college.name}</p>
-                                            <p className="text-xs text-slate-500">{college.location}</p>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        )}
-                    </div>
+          {/* LOGO */}
+          <div
+            onClick={() => handleNavClick({ page: "home" })}
+            className="flex items-center gap-2 cursor-pointer"
+          >
+            <img src="/logos/StudyCups.png" className="h-8 w-auto md:h-10" />
+          </div>
 
-                    {/* Desktop Navigation */}
-                    <div className="hidden lg:flex items-center">
-                        <nav className="flex items-center space-x-8">
-                            {navLinks.map(link => (
-                                <button
-                                    key={link.name}
-                                    onClick={() => handleNavClick(link.view)}
-                                    className="font-semibold text-[--text-secondary] hover:text-[--primary-medium] transition-colors duration-300"
-                                >
-                                    {link.name}
-                                </button>
-                            ))}
-                        </nav>
+          {/* DESKTOP MENU */}
+          <nav className="hidden lg:flex items-center space-x-6 text-base font-semibold text-[#0F2D52]">
 
-                        <div className="ml-8">
-                            <button
-                                onClick={onOpenApplyNow}
-                                className="flex items-center gap-2 px-5 py-2.5 font-semibold text-white bg-[--accent-green] rounded-lg shadow-md hover:bg-green-700 transition-all duration-300 whitespace-nowrap"
-                            >
-                                Apply Now
-                            </button>
-                        </div>
-                    </div>
+            <button
+              onClick={() => handleNavClick({ page: "home" })}
+              className={tabClass("home")}
+            >
+              Home
+            </button>
 
-                    {/* Mobile Menu Button */}
-                    <div className="lg:hidden">
-                        <button onClick={() => setIsMenuOpen(!isMenuOpen)}>
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
-                                    d="M4 6h16M4 12h16m-7 6h7"></path>
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-            </div>
+            <button
+              onClick={() => handleNavClick({ page: "listing" })}
+              className={tabClass("listing")}
+            >
+              Colleges
+            </button>
 
-            {/* Mobile Menu */}
-            {isMenuOpen && (
-                <div className="lg:hidden bg-white py-4">
-                    {navLinks.map(link => (
-                        <button
-                            key={link.name}
-                            onClick={() => {
-                                handleNavClick(link.view);
-                                setIsMenuOpen(false);
-                            }}
-                            className="block w-full text-left px-6 py-2 font-semibold text-slate-600 hover:bg-slate-100"
-                        >
-                            {link.name}
-                        </button>
-                    ))}
-                    <div className="px-6 py-2">
-                        <button
-                            onClick={() => {
-                                onOpenApplyNow();
-                                setIsMenuOpen(false);
-                            }}
-                            className="w-full flex items-center justify-center gap-2 px-5 py-2.5 font-semibold text-white bg-[--accent-green] rounded-lg shadow-md hover:bg-green-700 transition-all duration-300"
-                        >
-                            Apply Now
-                        </button>
-                    </div>
-                </div>
-            )}
-        </header>
-    );
+            <button
+              onClick={() => handleNavClick({ page: "courses" })}
+              className={tabClass("courses")}
+            >
+              Courses
+            </button>
+
+            <button
+              onClick={() => handleNavClick({ page: "exams" })}
+              className={tabClass("exams")}
+            >
+              Exams
+            </button>
+
+            <button
+              onClick={() => handleNavClick({ page: "blog" })}
+              className={tabClass("blog")}
+            >
+              Blog
+            </button>
+
+            <button
+              onClick={() => handleNavClick({ page: "compare" })}
+              className={tabClass("compare")}
+            >
+              Compare
+            </button>
+
+
+            <svg className="w-5 h-5 cursor-pointer hover:text-[#062042]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+
+            <svg className="w-5 h-5 cursor-pointer hover:text-[#062042]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14c-4.418 0-7.879 
+                2.067-9 5.385A2.327 2.327 0 005 21h14c1.092 0 
+                2.016-.628 2.5-1.615C19.879 16.067 16.418 14 12 14z" />
+            </svg>
+
+            <button
+              onClick={onOpenApplyNow}
+              className="bg-[#1E4A7A] text-white px-4 py-2 rounded-full font-semibold hover:bg-[#0aa34f]"
+            >
+              Apply Now
+            </button>
+          </nav>
+
+          {/* MOBILE MENU BUTTON */}
+          <button
+            className="lg:hidden"
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+          >
+            <svg className="w-7 h-7 text-[#0F2D52]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+                d="M4 6h16M4 12h16m-7 6h7" />
+            </svg>
+          </button>
+        </div>
+
+        {/* MOBILE MENU */}
+        {isMenuOpen && (
+          <div className="lg:hidden bg-[#0F2D52] text-white mt-3 rounded-2xl px-5 py-5 space-y-3 shadow-xl">
+
+            {[
+              ["Home", "home"],
+              ["Colleges", "listing"],
+              ["Courses", "courses"],
+              ["Exams", "exams"],
+              ["Blog", "blog"],
+              ["Compare", "compare"],
+            ].map(([label, page]) => (
+              <button
+                key={page}
+                onClick={() => {
+                  handleNavClick({ page } as View);
+                  setIsMenuOpen(false);
+                }}
+                className="block w-full text-left py-2 text-base font-semibold"
+              >
+                {label}
+              </button>
+            ))}
+
+            <button
+              onClick={onOpenApplyNow}
+              className="w-full mt-3 py-3 bg-[#f47062] rounded-full font-semibold"
+            >
+              Apply Now
+            </button>
+          </div>
+        )}
+      </div>
+    </header>
+  );
 };
 
 export default Header;

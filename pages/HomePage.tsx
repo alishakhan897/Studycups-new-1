@@ -1,24 +1,37 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import type { View, College } from '../types';
-import { PARTNER_LOGOS } from '../logos';
-import CollegeCard from '../components/CollegeCard';
-import { EXAMS_DATA, BLOG_POSTS_DATA, TESTIMONIALS_DATA, COURSE_STREAMS } from '../constants';
-import { useOnScreen } from '../hooks/useOnScreen';
-import ContactForm from '../components/ContactForm';
+import React, { useState, useMemo, useEffect, useRef } from "react";
+import type { View, College } from "../types";
+import { PARTNER_LOGOS } from "../logos";
+import CollegeCard from "../components/CollegeCard";
+
+
+import {
+
+    BLOG_POSTS_DATA,
+    TESTIMONIALS_DATA,
+    COURSE_STREAMS,
+} from "../constants";
+import { useOnScreen } from "../hooks/useOnScreen";
+import ContactForm from "../components/ContactForm";
+
 
 interface HomePageProps {
     setView: (view: View) => void;
     colleges: College[];
     onOpenApplyNow: () => void;
+    exams: any[];
+  
 }
 
-const AnimatedContainer: React.FC<{children: React.ReactNode, delay?: number, className?: string}> = ({ children, delay = 0, className = '' }) => {
-    // Fix: Removed 'triggerOnce' as it's not a valid property for IntersectionObserverInit. The hook's implementation already ensures it triggers once.
+const AnimatedContainer: React.FC<{
+    children: React.ReactNode;
+    delay?: number;
+    className?: string;
+}> = ({ children, delay = 0, className = "" }) => {
     const [ref, isVisible] = useOnScreen<HTMLDivElement>({ threshold: 0.1 });
     return (
         <div
             ref={ref}
-            className={`opacity-0 ${isVisible ? 'animate-fadeInUp' : ''} ${className}`}
+            className={`opacity-0 ${isVisible ? "animate-fadeInUp" : ""} ${className}`}
             style={{ animationDelay: `${delay}ms` }}
         >
             {children}
@@ -28,148 +41,375 @@ const AnimatedContainer: React.FC<{children: React.ReactNode, delay?: number, cl
 
 const StreamTag: React.FC<{ stream: string }> = ({ stream }) => {
     const colors: { [key: string]: string } = {
-        'Engineering': 'bg-[--primary-medium]/10 text-[--primary-dark]',
-        'Medical': 'bg-green-100 text-green-800',
-        'Management': 'bg-indigo-100 text-indigo-800',
-        'Law': 'bg-yellow-100 text-yellow-800',
-        'Civil Services': 'bg-red-100 text-red-800',
+        Engineering: "bg-[--primary-medium]/10 text-[--primary-dark]",
+        Medical: "bg-green-100 text-green-800",
+        Management: "bg-indigo-100 text-indigo-800",
+        Law: "bg-yellow-100 text-yellow-800",
+        "Civil Services": "bg-red-100 text-red-800",
     };
-    const colorClass = colors[stream] || 'bg-slate-100 text-slate-800';
+    const colorClass = colors[stream] || "bg-slate-100 text-slate-800";
     return (
-        <div className={`absolute top-4 right-4 text-xs font-bold px-2.5 py-1 rounded-full ${colorClass}`}>
+        <div
+            className={`absolute top-4 right-4 text-xs font-bold px-2.5 py-1 rounded-full ${colorClass}`}
+        >
             {stream}
         </div>
     );
 };
 
-
-const HomePage: React.FC<HomePageProps> = ({ setView, colleges, onOpenApplyNow }) => {
-    const [selectedStream, setSelectedStream] = useState('All Streams');
+const HomePage: React.FC<HomePageProps> = ({
+    setView,
+    colleges,
+    onOpenApplyNow,
+    exams,
+     coursesFromColleges
+}) => {
+    const [selectedStream, setSelectedStream] = useState("All Streams");
     const [openFaq, setOpenFaq] = useState<number | null>(0);
-    const [heroFilters, setHeroFilters] = useState({ college: '', city: '', course: '' });
-    
-    const animatedCollegeWords = useMemo(() => ['Colleges', 'Universities'], []);
+    const [heroFilters, setHeroFilters] = useState({
+        college: "",
+        city: "",
+        course: "",
+    }); 
+
+    const [query, setQuery] = useState("");
+const [activeCity, setActiveCity] = useState("");
+const [error, setError] = useState("");  // for "No city found"
+// STREAM FILTER FOR EXPLORE COURSES
+const [exploreLevel, setExploreLevel] = useState("All");
+// UNIQUE STREAMS FROM COURSES
+const [applyModalOpen, setApplyModalOpen] = useState(false);
+const [modalMode, setModalMode] = useState<"apply" | "brochure">("apply");
+
+
+
+
+
+const availableCities = [
+  "Delhi NCR", "Bangalore", "Hyderabad", "Pune",
+  "Mumbai", "Chennai", "Kolkata", "Kanpur"
+];
+
+const cityRefs = Object.fromEntries(
+  availableCities.map(city => [city, useRef(null)])
+);
+
+
+    const streamFilters = [
+  "BE/B.Tech",
+  "MBA/PGDM",
+  "MBBS",
+  "ME/M.Tech",
+  "B.Sc",
+  "BA",
+  "B.Com",
+  "BBA/BMS",
+  "B.Sc (Nursing)",
+  "Law",
+];
+
+
+
+
+
+    const animatedCollegeWords = useMemo(
+        () => ["Universities", "Colleges"],
+        []
+    );
     const [animatedCollegeWordIndex, setAnimatedCollegeWordIndex] = useState(0);
+
+    const words = ["Universities", "Colleges"];
+    const [currentWord, setCurrentWord] = useState("");
+    const [wordIndex, setWordIndex] = useState(0);
+    const [charIndex, setCharIndex] = useState(0);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [selectedtopcollge, setSelectedtopcollge] = useState("");
+   const [selectedExamFilter, setSelectedExamFilter] = useState("All");
+
+
+    
+
+
+
+    console.log("coursesFromColleges:", coursesFromColleges);
+
+
+  const extractCourses = (colleges) => {
+  const arr = [];
+
+  colleges.forEach(col => {
+    if (!col.courses) return;
+
+    col.courses.forEach(c => {
+      arr.push({
+        ...c,
+        collegeId: col.id,
+        collegeName: col.name,
+        stream: col.stream,
+        courseKey: c.name?.split(" ")[0] || c.name,
+      });
+    });
+  });
+
+  return arr;
+};
+
+const courses = extractCourses(colleges);
+   useEffect(() => {
+        let typingSpeed = 120;
+
+        if (isDeleting) typingSpeed = 60;
+
+        const handleTyping = () => {
+            const fullWord = words[wordIndex];
+
+            if (!isDeleting) {
+                setCurrentWord(fullWord.substring(0, charIndex + 1));
+                setCharIndex(charIndex + 1);
+
+                if (charIndex + 1 === fullWord.length) {
+                    setTimeout(() => setIsDeleting(true), 1500);
+                }
+            } else {
+                setCurrentWord(fullWord.substring(0, charIndex - 1));
+                setCharIndex(charIndex - 1);
+
+                if (charIndex - 1 === 0) {
+                    setIsDeleting(false);
+                    setWordIndex((prev) => (prev + 1) % words.length);
+                }
+            }
+        };
+
+        const timeout = setTimeout(handleTyping, typingSpeed);
+
+        return () => clearTimeout(timeout);
+    }, [charIndex, isDeleting]);
+
 
     useEffect(() => {
         const interval = setInterval(() => {
-            setAnimatedCollegeWordIndex(prevIndex => (prevIndex + 1) % animatedCollegeWords.length);
+            setAnimatedCollegeWordIndex(
+                (prevIndex) => (prevIndex + 1) % animatedCollegeWords.length
+            );
         }, 2500);
         return () => clearInterval(interval);
     }, [animatedCollegeWords]);
 
     const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
-        setHeroFilters(prev => ({ ...prev, [name]: value }));
+        setHeroFilters((prev) => ({ ...prev, [name]: value }));
     };
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
-        setView({ page: 'listing', filters: heroFilters });
+        setView({ page: "listing", filters: heroFilters });
     };
 
-    const streams = useMemo(() => ['All Streams', ...Object.keys(COURSE_STREAMS)], []);
+    const handleCitySearch = () => {
+  const normalized = query.trim().toLowerCase();
 
-    const courseToStreamMap = useMemo(() => {
-        const map = new Map<string, string>();
-        for (const stream in COURSE_STREAMS) {
-            for (const courseName of COURSE_STREAMS[stream as keyof typeof COURSE_STREAMS]) {
-                map.set(courseName, stream);
-            }
-        }
-        return map;
-    }, []);
+  const foundCity = availableCities.find(
+    (city) => city.toLowerCase() === normalized
+  );
+
+ if (normalized === "") {
+  // EMPTY INPUT → NO ERROR
+  setError("");
+  setActiveCity("");
+  return;
+}
+
+if (!foundCity) {
+  setActiveCity("");
+  setError("No city found");
+  return;
+}
+
+  setError("");  
+  setActiveCity(foundCity);
+
+  const ref = cityRefs[foundCity];
+  if (ref?.current) {
+    ref.current.scrollIntoView({
+      behavior: "smooth",
+      inline: "center",
+      block: "nearest"
+    });
+  }
+};
+
+
+    const streams = useMemo(
+        () => ["All Streams", ...Object.keys(COURSE_STREAMS)],
+        []
+    );
 
     const filteredColleges = useMemo(() => {
-        if (selectedStream === 'All Streams') {
-            return colleges.slice(0, 8); // Default view
+        if (selectedStream === "All Streams") {
+            return colleges.slice(0, 8);
         }
+        return colleges.filter((college) => college.stream === selectedStream);
+    }, [colleges, selectedStream]);
 
-        return colleges.filter(college =>
-            college.courses.some(course => courseToStreamMap.get(course.name) === selectedStream)
-        );
-    }, [colleges, selectedStream, courseToStreamMap]);
+
 
     const whyChooseUsFeatures = [
         {
-            icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-[--primary-medium]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>,
-            title: "Comprehensive Data",
-            description: "Access detailed information on thousands of colleges, courses, fees, and placement statistics all in one place."
+            id: "ai",
+            icon: (
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-8 w-8 text-[--primary-medium]"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                >
+                    <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                    />
+                </svg>
+            ),
+            title: "AI Guidance",
+            subtitle: "Personalized recommendations",
         },
         {
-            icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-[--primary-medium]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>,
-            title: "AI-Powered Guidance",
-            description: "Our smart AI assistant helps you find the perfect college based on your preferences, grades, and career goals."
+            id: "verified",
+            icon: (
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-8 w-8 text-[--primary-medium]"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                >
+                    <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                </svg>
+            ),
+            title: "Verified Data",
+            subtitle: "Authentic information",
         },
         {
-            icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-[--accent-green]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
-            title: "Simplified Applications",
-            description: "Apply to multiple colleges with a single form, track your application status, and get timely reminders."
-        }
+            id: "easy-app",
+            icon: (
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-8 w-8 text-[--accent-green]"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                >
+                    <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5l7 7-7 7"
+                    />
+                </svg>
+            ),
+            title: "Easy Applications",
+            subtitle: "Simplified process",
+        },
+        {
+            id: "trusted",
+            icon: (
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-8 w-8 text-[--primary-medium]"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                >
+                    <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 11c.5304 0 1.0391-.2107 1.4142-.5858C13.7893 10.0391 14 9.5304 14 9s-.2107-1.0391-.5858-1.4142C13.0391 7.2107 12.5304 7 12 7s-1.0391.2107-1.4142.5858C10.2107 7.9609 10 8.4696 10 9s.2107 1.0391.5858 1.4142C10.9609 10.7893 11.4696 11 12 11z"
+                    />
+                    <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 22C7.03 22 3 17.97 3 13c0-3.91 2.51-7.24 6-8.48M21 13c0 4.97-4.03 9-9 9"
+                    />
+                </svg>
+            ),
+            title: "Trusted Platform",
+            subtitle: "Secure and reliable",
+        },
     ];
 
     const courseCategories = [
         {
-            name: 'Engineering',
-            description: 'Innovate the future with cutting-edge technology and design.',
-            icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>,
-            color: 'bg-[--primary-medium]',
-            courseCount: COURSE_STREAMS['Engineering'].length,
+            name: "Engineering",
+            description: "Innovate the future with cutting-edge technology.",
+            color: "bg-[#1f5fd6]",
+            courseCount: COURSE_STREAMS["Engineering"].length,
+            iconPath: "/icons/technology.png",
+              
         },
         {
-            name: 'Management',
-            description: 'Lead organizations and shape the future of business.',
-            icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>,
-            color: 'bg-[--primary-dark]',
-            courseCount: COURSE_STREAMS['Management'].length,
+            name: "Management",
+            description: "Lead organizations and shape the business world.",
+            color: "bg-[#1ea35a]",
+            courseCount: COURSE_STREAMS["Management"].length,
+            iconPath:"/icons/project-management.png",
+               
         },
         {
-            name: 'Medical',
-            description: 'Embark on a noble journey to heal and care for others.',
-            icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-white" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" /></svg>,
-            color: 'bg-green-600',
-            courseCount: COURSE_STREAMS['Medical'].length,
+            name: "Medical",
+            description: "Embark on a journey to heal and care for others.",
+            color: "bg-[#f59e0b]",
+            courseCount: COURSE_STREAMS["Medical"].length,
+            iconPath:"/icons/medical-symbol (1).png",
         },
         {
-            name: 'Arts & Science',
-            description: 'Explore the depths of human knowledge and creativity.',
-            icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>,
-            color: 'bg-orange-500',
-            courseCount: COURSE_STREAMS['Arts & Science'].length,
+            name: "Commerce",
+            description: "Build strong foundations in finance and trade.",
+            color: "bg-[#8b5cf6]",
+            courseCount: COURSE_STREAMS["Commerce"]?.length || 90,
+            iconPath:"/icons/smart-shopping.png"
+          ,
         },
         {
-            name: 'Law',
-            description: 'Uphold justice and navigate the complexities of the legal world.',
-            icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2h10a2 2 0 002-2v-1a2 2 0 012-2h1.945M7.707 4.293l4.243 4.243-4.243 4.243M16.293 4.293l-4.243 4.243 4.243 4.243" /></svg>,
-            color: 'bg-yellow-600',
-            courseCount: COURSE_STREAMS['Law'].length,
-        },
-        {
-            name: 'Design',
-            description: 'Create visually stunning and functional products.',
-            icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>,
-            color: 'bg-pink-600',
-            courseCount: COURSE_STREAMS['Design'].length,
+            name: "Arts",
+            description: "Explore creativity and the humanities.",
+            color: "bg-[#f97316]",
+            courseCount: COURSE_STREAMS["Arts & Science"]?.length || 95,
+            iconPath:
+             "/icons/inspiration.png",
         },
     ];
 
     const faqs = [
         {
             question: "How does the AI recommendation work?",
-            answer: "Our AI College Counselor uses a powerful language model to understand your query. It analyzes your preferences for location, courses, budget, and other details, then matches them against our extensive database of colleges to provide you with personalized recommendations."
+            answer:
+                "Our AI College Counselor uses a powerful language model to understand your query and match colleges based on your preferences for location, courses, and budget.",
         },
         {
             question: "Is there a cost to apply through StudyCups?",
-            answer: "Using the StudyCups portal to find and compare colleges is completely free. The 'Apply Now' feature connects you with college admission counselors. Standard application fees required by the colleges themselves may still apply."
+            answer:
+                "Using StudyCups to find and compare colleges is free. Standard college application fees may still apply as per each institution.",
         },
         {
             question: "How accurate is the college data?",
-            answer: "We strive for the highest accuracy. Our team regularly updates information from official college websites, government data, and other reliable sources to ensure you have the most current details on fees, placements, and courses."
+            answer:
+                "We regularly update information from official college websites, government data, and other reliable sources.",
         },
         {
             question: "Can I compare more than two colleges?",
-            answer: "Yes! On our 'Colleges' listing page, you can select the 'Compare' checkbox on any number of college cards. Once you have at least two selected, you can navigate to the 'Compare' page to see a detailed side-by-side comparison."
-        }
+            answer:
+                "Yes. On the listing page you can select multiple colleges and open the Compare view for a side-by-side comparison.",
+        },
     ];
 
     const toggleFaq = (index: number) => {
@@ -177,411 +417,1598 @@ const HomePage: React.FC<HomePageProps> = ({ setView, colleges, onOpenApplyNow }
     };
 
     const blogCategoryColors: { [key: string]: string } = {
-        'Rankings': 'bg-blue-100 text-blue-800',
-        'Exam Prep': 'bg-orange-100 text-orange-800',
-        'Career Advice': 'bg-green-100 text-green-800',
+        Rankings: "bg-blue-100 text-blue-800",
+        "Exam Prep": "bg-orange-100 text-orange-800",
+        "Career Advice": "bg-green-100 text-green-800",
     };
 
+   const rankingColleges = [
+  {
+    id: 1,
+    stream: "MBA/PGDM",
+    name: "IIMA - Indian Institute of Management",
+    logoUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/c/cd/IIM%2C_Ahmedabad_Logo.svg/1200px-IIM%2C_Ahmedabad_Logo.svg.png",
+    city: "Ahmedabad",
+    state: "Gujarat",
+    rating: "5/5",
+    rankingText: "#2 out of 50 in India 2019",
+    cutoffText: "CAT 2024 Cut off 99",
+    deadline: "7 July - 08 Sept 2025",
+    fees: "₹35,35,000",
+  },
+  {
+    id: 2,
+    stream: "BE/B.Tech",
+    name: "IIT Bombay - Indian Institute of Technology [IITB]",
+    logoUrl: "https://www.som.iitb.ac.in/epm/images/banner.jpg",
+    city: "Mumbai",
+    state: "Maharashtra",
+    rating: "5/5",
+    rankingText: "#2 out of 50 in India 2025",
+    cutoffText: "JEE-Advanced 2025 Cut off 66",
+    deadline: "1 Oct - 05 Nov 2025",
+    fees: "₹52,500",
+  },
+  {
+    id: 3,
+    stream: "MBBS",
+    name: "AIIMS - All India Institute of Medical Sciences",
+    logoUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/8/85/All_India_Institute_of_Medical_Sciences%2C_Delhi.svg/1075px-All_India_Institute_of_Medical_Sciences%2C_Delhi.svg.png",
+    city: "New Delhi",
+    state: "Delhi NCR",
+    rating: "4.9/5",
+    rankingText: "#8 out of 200 in India 2025",
+    cutoffText: "NEET 2025 Cut off 48",
+    deadline: "8 Apr - 07 May 2025",
+    fees: "₹1,145",
+  },
+  {
+    id: 4,
+    stream: "Law",
+    name: "National Law School of India University - [NLSIU]",
+    logoUrl: "https://upload.wikimedia.org/wikipedia/en/6/6d/National_Law_Institute_University_Logo.png",
+    city: "Bangalore",
+    state: "Karnataka",
+    rating: "4.9/5",
+    rankingText: "-",
+    cutoffText: "CLAT 2025 Cut off 112",
+    deadline: "15 Nov - 23 Mar 2026",
+    fees: "₹5,00,000",
+  },
+  {
+    id: 5,
+    stream: "MBBS",
+    name: "Vardhman Mahavir Medical College - [VMMC]",
+    logoUrl: "https://neetsupport.com/content/images/2025/01/Vardhman-Mahavir-Medical-College--New-Delhi.webp",
+    city: "New Delhi",
+    state: "Delhi NCR",
+    rating: "4.9/5",
+    rankingText: "-",
+    cutoffText: "NEET 2025 Cut off 132",
+    deadline: "1 Feb - 15 May 2024",
+    fees: "₹57,000",
+  },
+  {
+    id: 6,
+    stream: "BE/B.Tech",
+    name: "IIT Delhi - Indian Institute of Technology [IITD]",
+    logoUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTYSMRrwORnDdusOT7bJ3S7WS04C3bPzEGS1Q&s",
+    city: "New Delhi",
+    state: "Delhi NCR",
+    rating: "4.9/5",
+    rankingText: "#3 out of 50 in India 2025",
+    cutoffText: "JEE-Advanced 2025 Cut off 355",
+    deadline: "1 Oct - 05 Nov 2025",
+    fees: "₹2,27,750",
+  },
+  {
+    id: 7,
+    stream: "MBA/PGDM",
+    name: "IIMC - Indian Institute of Management",
+    logoUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/3/3f/IIM_Calcutta_Logo.svg/1200px-IIM_Calcutta_Logo.svg.png",
+    city: "Kolkata",
+    state: "West Bengal",
+    rating: "4.9/5",
+    rankingText: "#99 out of 200 in India 2023",
+    cutoffText: "CAT 2024 Cut off 99",
+    deadline: "16 Oct - 26 Nov 2025",
+    fees: "₹13,50,000",
+  },
+  {
+    id: 8,
+    stream: "BA",
+    name: "Hindu College",
+    logoUrl: "https://we-recycle.org/wp-content/uploads/2014/03/hindu-college.png",
+    city: "New Delhi",
+    state: "Delhi NCR",
+    rating: "4.9/5",
+    rankingText: "#1 out of 300 in India 2025",
+    cutoffText: "CUET 2025 Cut off 448",
+    deadline: "17 June - 10 Aug 2025",
+    fees: "₹28,670",
+  },
+  {
+    id: 9,
+    stream: "B.Com",
+    name: "Shri Ram College of Commerce - [SRCC]",
+    logoUrl: "https://srcce.org/public/uploads/logo/1704695206.png",
+    city: "New Delhi",
+    state: "Delhi NCR",
+    rating: "4.9/5",
+    rankingText: "#18 out of 300 in India 2025",
+    cutoffText: "CUET 2025 Cut off 910",
+    deadline: "17 June - 10 Aug 2025",
+    fees: "₹32,420",
+  },
+  {
+    id: 10,
+    stream: "B.Sc",
+    name: "Institute of Hotel Management [IHM], Pusa",
+    logoUrl: "https://www.govtjobsblog.in/wp-content/uploads/2023/03/IHM-Pusa.png",
+    city: "New Delhi",
+    state: "Delhi NCR",
+    rating: "4.9/5",
+    rankingText: "-",
+    cutoffText: "NCHMCT-JEE 2025 Cut off 180",
+    deadline: "16 Dec - 15 Mar 2026",
+    fees: "₹1,76,515",
+  },
+];
+
+ const displayedColleges =
+  selectedtopcollge === "All" || selectedtopcollge === ""
+    ? rankingColleges
+    : rankingColleges.filter((c) => c.stream === selectedtopcollge);
+
+
+
+
+    const bgImages = [
+        "https://res.cloudinary.com/alishakhan987/image/upload/v1765219557/Gemini_Generated_Image_3xjtay3xjtay3xjt-Photoroom_nx9j6s.png",
+        "https://res.cloudinary.com/alishakhan987/image/upload/v1765219972/Gemini_Generated_Image_mnbzv6mnbzv6mnbz_1_-Photoroom_f5zilz.png"
+    ];
+    const [activeIndex, setActiveIndex] = useState(0);
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setActiveIndex((prev) => (prev + 1) % bgImages.length);
+        }, 4000); // every 4 seconds switch
+
+        return () => clearInterval(interval);
+    }, []);
+
+    
+const filteredExams =
+  selectedExamFilter === "All"
+    ? exams
+    : exams.filter((exam) => exam.stream === selectedExamFilter);
+
+
+
+// FILTERED COURSES
+const exploreLevels = useMemo(() => {
+  const s = new Set<string>();
+  courses.forEach(c => {
+    if (c.level) s.add(c.level.trim());
+  });
+  return ["All", ...Array.from(s)];
+}, [courses]);
+
+
     return (
-        <div>
-            {/* Hero Section */}
-            <section className="bg-[--primary-dark] text-white overflow-hidden">
-                <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
-                    <AnimatedContainer>
-                        <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight h-16 md:h-20 flex items-center justify-center">
-                            Find Your Dream&nbsp;
-                            <span className="text-[--accent-orange] inline-block w-[190px] md:w-[280px] text-left">
-                                <span key={animatedCollegeWordIndex} className="animate-slideInUp inline-block">
-                                    {animatedCollegeWords[animatedCollegeWordIndex]}
-                                </span>
-                            </span>
-                        </h1>
-                    </AnimatedContainer>
-                    <AnimatedContainer delay={150}>
-                        <p className="mt-4 text-lg text-white/80 max-w-2xl mx-auto">
-                            Explore thousands of colleges and courses. Get started by searching below.
-                        </p>
-                    </AnimatedContainer>
-                    <AnimatedContainer delay={300}>
-                        <form
-                            onSubmit={handleSearch}
-                            className="mt-8 max-w-4xl mx-auto bg-white/10 backdrop-blur-md p-4 rounded-xl shadow-lg border border-white/20"
+        <div >
+
+
+            <style>{`
+  @keyframes scrollX {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  } 
+
+  @keyframes logoScroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-logoScroll {
+  animation: logoScroll 20s linear infinite;
+}
+  @keyframes cityAutoScroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-cityScroll {
+  animation: cityAutoScroll 25s linear infinite;
+}
+
+`}</style>
+
+
+
+     <section className="
+  relative w-full h-[500px] overflow-hidden bg-[#0A2A6C]
+  max-md:h-[600px]
+">
+
+  {/* BACKGROUND SLIDER */}
+  <div
+    className="absolute inset-0 flex"
+    style={{
+      width: "200%",
+      animation: "scrollX 25s linear infinite"
+    }}
+  >
+    <div
+      style={{
+        width: "100%",
+        height: "100%",
+        backgroundImage:
+          "url('https://www.pixelstalk.net/wp-content/uploads/2016/10/College-Wallpapers-HD-1920x1080-620x349.jpg')",
+        backgroundSize: "cover",
+        backgroundPosition: "center"
+      }}
+    />
+
+    <div
+      style={{
+        width: "100%",
+        height: "100%",
+        backgroundImage:
+          "url('https://www.pixelstalk.net/wp-content/uploads/2016/10/HD-download-college-wallpapers.jpg')",
+        backgroundSize: "cover",
+        backgroundPosition: "center"
+      }}
+    />
+  </div>
+
+  {/* OVERLAY */}
+  <div className="absolute inset-0 bg-gradient-to-br from-[#112541]/40 to-transparent z-10"></div>
+
+  {/* CONTENT */}
+  <div className="relative z-10 max-w-7xl mx-auto px-6 pt-24 pb-8 md:pt-28">
+
+    {/* HEADING */}
+    <h1 className="
+      text-white font-extrabold
+      text-[28px] leading-[36px]
+      max-md:flex max-md:flex-col max-md:gap-0
+      md:text-[40px] md:leading-[60px] md:flex md:flex-row md:items-center md:gap-3
+    ">
+      <span>Find Your Dream</span>
+
+      <span className="text-[#F4A71D]">
+        {currentWord}
+        <span className="inline-block w-[2px] h-8 bg-[#F4A71D] ml-1 animate-pulse md:h-10"></span>
+      </span>
+    </h1>
+
+    {/* SUBTEXT */}
+    <p className="
+      text-gray-300 mt-3 font-medium
+      text-sm max-w-sm
+      md:text-lg md:max-w-xl
+    ">
+      Explore thousand of colleges, courses, fees, and rankings.
+    </p>
+
+    {/* SEARCH BAR */}
+    <form
+      onSubmit={handleSearch}
+      className="
+        mt-5 w-full max-w-3xl shadow-xl rounded-2xl overflow-hidden
+        flex flex-col gap-2
+        md:flex-row md:rounded-full md:gap-0
+      "
+    >
+      <div className="
+        bg-white py-3 px-5 flex items-center
+        max-md:rounded-xl
+        md:rounded-l-full md:flex-1 md:shadow-inner
+      ">
+        <svg className="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+            d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"/>
+        </svg>
+        <input
+          type="text"
+          name="college"
+          placeholder="College Name"
+          value={heroFilters.college}
+          onChange={handleFilterChange}
+          className="w-full outline-none bg-transparent text-gray-800 placeholder-gray-500"
+        />
+      </div>
+
+      <div className="
+        bg-white py-3 px-5 flex items-center
+        max-md:rounded-xl
+        md:border-l md:border-gray-200 md:flex-1 md:shadow-inner
+      ">
+        <svg className="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.828 0l-4.243-4.243m11.314-11.314L13.414 3.1a1.998 1.998 0 00-2.828 0L6.343 7.343"/>
+        </svg>
+        <input
+          type="text"
+          name="city"
+          placeholder="City"
+          value={heroFilters.city}
+          onChange={handleFilterChange}
+          className="w-full outline-none bg-transparent text-gray-800 placeholder-gray-500"
+        />
+      </div>
+
+      <button
+        type="submit"
+        className="
+          bg-[#0F6BC9] text-white font-semibold
+          py-3 text-sm
+          max-md:rounded-xl max-md:w-full
+          md:w-[140px] md:rounded-r-full md:text-base
+          hover:bg-[#0c59a3] transition
+        "
+      >
+        Search
+      </button>
+    </form>
+
+    {/* WHY CHOOSE SECTION */}
+    <h2 className="text-white font-semibold mt-6 mb-3 text-lg md:text-xl">
+      Why Choose StudyCups
+    </h2>
+
+    {/* 4 CARDS IN ONE LINE ON MOBILE */}
+    <div className="
+      grid gap-3
+      max-md:grid-cols-4
+      md:grid-cols-4 md:gap-4 md:max-w-3xl
+    ">
+      {whyChooseUsFeatures.map((item) => (
+        <div
+          key={item.id}
+          className="
+            bg-white rounded-xl shadow-md
+            flex flex-col items-center text-center transition
+            py-4 px-3 hover:shadow-lg hover:scale-[1.01]
+
+            /* MOBILE: small cards */
+            max-md:p-2 max-md:scale-[0.85] max-md:leading-tight
+          "
+        >
+          <div className="p-2 rounded-lg bg-blue-100 mb-1">
+            {item.icon}
+          </div>
+          <p className="font-semibold text-[10px] md:text-sm text-[#0A2A6C]">
+            {item.title}
+          </p>
+          <p className="text-gray-500 text-[8px] md:text-xs mt-1">
+            {item.subtitle}
+          </p>
+        </div>
+      ))}
+    </div>
+
+  </div>
+</section>
+
+
+            {/* -------------------------------------------------- */}
+            {/* TOP COURSES / STUDY GOAL (Image 1 middle row)     */}
+            {/* -------------------------------------------------- */}
+
+       <section className="pt-5 pb-10 bg-white shadow-[0_20px_40px_rgba(0,0,0,0.06)]">
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+    {/* HEADER */}
+    <div className="mb-6 md:mb-8">
+      <h2
+        className="
+          text-[24px] md:text-[32px]
+          font-extrabold text-[#0A214A]
+          leading-tight tracking-tight
+        "
+      >
+        Top Courses · Select Your Study Goal
+      </h2>
+
+      <p className="text-sm md:text-base text-slate-600 mt-1">
+        Explore curated course categories tailored to your academic interests.
+      </p>
+    </div>
+
+    {/* GRID */}
+    <div
+      className="
+        grid
+        max-md:grid-cols-2
+        md:grid-cols-3 lg:grid-cols-5
+        gap-4 md:gap-6
+      "
+    >
+      {courseCategories.map((category, index) => (
+        <AnimatedContainer key={category.name} delay={index * 80}>
+          <button
+            onClick={() =>
+              setView({
+                page: "courses",
+                initialStream: category.name,
+              })
+            }
+            className={`
+              ${category.color}
+              text-white rounded-2xl w-full
+
+              /* Desktop Size */
+              px-6 py-6 h-[150px] md:h-[170px]
+
+              /* MOBILE SIZING */
+              max-md:h-[135px]
+              max-md:px-4 max-md:py-4
+
+              /* Shadow */
+              shadow-[0_6px_18px_rgba(0,0,0,0.12)]
+              hover:shadow-[0_10px_24px_rgba(0,0,0,0.18)]
+              transition-all duration-300 hover:-translate-y-[2px]
+
+              /* Layout */
+              flex flex-col justify-between
+            `}
+          >
+            {/* TOP - Icon + Title */}
+            <div className="flex items-center gap-3 max-md:gap-2">
+              <div
+                className="
+                  bg-white/25 border border-white/20 backdrop-blur-sm
+                  rounded-xl flex items-center justify-center
+
+                  /* MOBILE ICON SIZE */
+                  max-md:p-2 max-md:h-8 max-md:w-8
+                  md:p-3
+                "
+              >
+              <img
+    src={category.iconPath}
+    alt={category.name}
+    className="max-md:h-5 max-md:w-5 md:h-6 md:w-6 object-contain   invert brightness-5 saturate-5"
+  />
+              </div>
+
+              <div className="leading-tight">
+                <p className="font-bold text-[13px] md:text-[15px]">
+                  {category.name}
+                </p>
+                <p className="text-[10px] md:text-[11px] text-white/80">
+                  {category.courseCount}+ courses
+                </p>
+              </div>
+            </div>
+
+            {/* DESCRIPTION */}
+            <p
+              className="
+                text-white/90 leading-snug
+                text-[10px] md:text-xs mt-1
+                max-md:line-clamp-2
+              "
+            >
+              {category.description}
+            </p>
+          </button>
+        </AnimatedContainer>
+      ))}
+    </div>
+  </div>
+</section>
+
+            {/* -------------------------------------------------- */}
+            {/* FIND YOUR IDEAL COLLEGE (Top Universities cards)  */}
+            {/* -------------------------------------------------- */}
+
+            <section className="pb-6 bg-white mt-10 pt-12 shadow-[0_12px_28px_rgba(0,0,0,0.06)] rounded-2xl">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        {/* Heading */}
+      <div className="mb-10">
+
+    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+
+        {/* LEFT SIDE: Heading */}
+        <div className="flex-shrink-0">
+            <h2
+                className="text-[28px] md:text-[32px] font-extrabold tracking-tight text-slate-900"
+                style={{ fontFamily: "Roboto, sans-serif" }}
+            >
+                Top Universities / Colleges
+            </h2>
+
+            <p
+                className="text-sm md:text-base text-slate-500 mt-1"
+                style={{ fontFamily: "Roboto, sans-serif" }}
+            >
+                Find Your Ideal College
+            </p>
+        </div>
+
+        {/* RIGHT SIDE: Stream Filters */}
+        <div className="flex flex-wrap gap-1 lg:justify-end lg:max-w-[60%]">
+            {streams.map((stream) => (
+                <button
+                    key={stream}
+                    onClick={() => setSelectedStream(stream)}
+                    className={`px-5 py-2 rounded-full text-sm font-medium border transition-all
+                        ${selectedStream === stream
+                            ? "bg-[#1f4fa8] text-white border-[#1f4fa8] shadow-md"
+                            : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50 shadow-sm"
+                        }
+                    `}
+                    style={{ fontFamily: "Roboto, sans-serif" }}
+                >
+                    {stream}
+                </button>
+            ))}
+        </div>
+
+    </div>
+
+</div>
+
+
+        {/* Horizontal Carousel */}
+        {filteredColleges.length > 0 ? (
+            <div className="relative">
+
+                {/* Left Arrow */}
+                <button
+                    onClick={() =>
+                        document
+                            .getElementById("collegeCarousel")
+                            ?.scrollBy({ left: -350, behavior: "smooth" })
+                    }
+                    className="hidden md:flex items-center justify-center absolute left-0 top-1/2 -translate-y-1/2
+                    bg-[#1f4fa8] text-white h-12 w-12 rounded-full shadow-xl z-20
+                    hover:bg-[#163a7a] transition"
+                >
+                    <span className="text-xl font-bold">←</span>
+                </button>
+
+                {/* Scroll Container */}
+                <div
+                    id="collegeCarousel"
+                    className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth pb-0 px-2"
+                >
+                    {filteredColleges.map((college, index) => (
+                        <div
+                            key={college.id}
+                           className="min-w-[300px] max-w-[330px] h-[430px] flex-shrink-0 max-md:h-[400px]"
+
                         >
-                            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                                <div className="md:col-span-2 relative">
-                                    <input
-                                        type="text"
-                                        name="college"
-                                        value={heroFilters.college}
-                                        onChange={handleFilterChange}
-                                        placeholder="College name..."
-                                        className="w-full pl-4 pr-4 py-3 bg-white/90 text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-[--primary-medium]"
-                                    />
-                                </div>
-                                <div className="relative">
-                                    <input
-                                        type="text"
-                                        name="city"
-                                        value={heroFilters.city}
-                                        onChange={handleFilterChange}
-                                        placeholder="City..."
-                                        className="w-full pl-4 pr-4 py-3 bg-white/90 text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-[--primary-medium]"
-                                    />
-                                </div>
-                                <button type="submit" className="w-full px-6 py-3 font-semibold text-white bg-[--accent-green] rounded-lg shadow-md hover:bg-green-700 transition-all duration-300">
-                                    Search
-                                </button>
-                            </div>
-                        </form>
-                    </AnimatedContainer>
-                </div>
-            </section>
-
-            {/* Scrolling Logos Section */}
-            <section className="py-12 bg-white">
-                <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                    <h2 className="text-center text-lg font-semibold text-slate-500 mb-8">
-                        Trusted by Students from Top Institutions
-                    </h2>
-                    <div 
-                        className="scrolling-logos-container w-full overflow-hidden relative"
-                        style={{ maskImage: "linear-gradient(to right, transparent, black 20%, black 80%, transparent)" }}
-                    >
-                        <div className="flex animate-scroll">
-                            {[...PARTNER_LOGOS, ...PARTNER_LOGOS].map((logo, index) => (
-                                <div key={`${logo.src}-${index}`} className="flex-shrink-0 mx-10" style={{ width: '160px'}}>
-                                    <img 
-                                        src={logo.src} 
-                                        alt={logo.alt} 
-                                        className="h-16 w-full object-contain filter grayscale hover:grayscale-0 transition-all duration-300" 
-                                    />
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-             {/* Why Choose Us Section */}
-            <section className="py-16 bg-slate-50">
-                <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="text-center mb-12">
-                        <h2 className="text-3xl font-extrabold text-slate-800">Why Choose StudyCups?</h2>
-                        <p className="mt-2 text-slate-500 max-w-2xl mx-auto">Your trusted partner in navigating the path to higher education.</p>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        {whyChooseUsFeatures.map((feature, index) => (
-                            <AnimatedContainer key={index} delay={index * 150}>
-                                <div className="text-center p-8 bg-white rounded-2xl shadow-lg h-full transform transition-transform hover:-translate-y-2 border">
-                                    <div className="flex items-center justify-center h-16 w-16 rounded-full bg-slate-100 mx-auto">
-                                        {feature.icon}
-                                    </div>
-                                    <h3 className="text-xl font-bold text-slate-800 mt-6">{feature.title}</h3>
-                                    <p className="text-slate-600 mt-2">{feature.description}</p>
-                                </div>
+                            <AnimatedContainer delay={index * 90} className="h-full">
+                                <CollegeCard 
+                                college={college} 
+                                setView={setView} 
+                                onOpenBrochure={() => {
+    setModalMode("brochure");
+    setApplyModalOpen(true);
+    
+  }} className="mb-0"/>
                             </AnimatedContainer>
-                        ))}
-                    </div>
-                </div>
-            </section>
-
-            {/* Explore Courses Section */}
-            <section className="py-16 bg-white">
-                <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="text-center mb-12">
-                        <h2 className="text-3xl font-extrabold text-slate-800">Explore Top Courses</h2>
-                        <p className="mt-2 text-slate-500 max-w-2xl mx-auto">Discover programs that align with your passion and career goals.</p>
-                    </div>
-                    <div className="relative -mx-4">
-                        <div className="flex overflow-x-auto space-x-8 pb-6 px-4 no-scrollbar">
-                            {courseCategories.map((category, index) => (
-                                <div key={category.name} className="flex-shrink-0 w-[85vw] sm:w-[45vw] md:w-[30vw] lg:w-[24vw]">
-                                    <AnimatedContainer delay={index * 100}>
-                                        <div
-                                            onClick={() => setView({ page: 'courses' })}
-                                            className={`p-8 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 flex flex-col h-full cursor-pointer text-white ${category.color}`}
-                                        >
-                                            <div className="flex items-center gap-4 mb-4">
-                                                <div className="bg-white/20 p-3 rounded-full">
-                                                    {category.icon}
-                                                </div>
-                                                <div>
-                                                    <h3 className="text-2xl font-bold">{category.name}</h3>
-                                                    <span className="text-sm font-semibold bg-white/20 px-2 py-0.5 rounded-md">{category.courseCount}+ Courses</span>
-                                                </div>
-                                            </div>
-                                            <p className="text-white/80 text-base mb-6 flex-grow">{category.description}</p>
-                                            <span className="font-semibold text-white group-hover:underline">
-                                                Explore Now &rarr;
-                                            </span>
-                                        </div>
-                                    </AnimatedContainer>
-                                </div>
-                            ))}
                         </div>
-                    </div>
+                    ))}
                 </div>
-            </section>
 
-            {/* Filters & Featured Colleges Section */}
-            <section className="py-16 bg-slate-50">
-                <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="text-center mb-12">
-                         <h2 className="text-3xl font-extrabold">Find Your Ideal College</h2>
-                         <p className="mt-2 text-slate-500">Select a stream to discover top-rated colleges.</p>
+                {/* Right Arrow */}
+                <button
+                    onClick={() =>
+                        document
+                            .getElementById("collegeCarousel")
+                            ?.scrollBy({ left: 350, behavior: "smooth" })
+                    }
+                    className="hidden md:flex items-center justify-center absolute right-0 top-1/2 -translate-y-1/2
+                    bg-[#1f4fa8] text-white h-12 w-12 rounded-full shadow-xl z-20
+                    hover:bg-[#163a7a] transition"
+                >
+                    <span className="text-xl font-bold">→</span>
+                </button>
+            </div>
+        ) : (
+            <div className="text-center py-12 bg-white rounded-2xl shadow-md border">
+                <h3
+                    className="text-lg font-semibold text-slate-700"
+                    style={{ fontFamily: "Roboto, sans-serif" }}
+                >
+                    No Colleges Match Your Criteria
+                </h3>
+                <p className="text-slate-500 mt-2" style={{ fontFamily: "Roboto, sans-serif" }}>
+                    Try adjusting your filters or view all colleges.
+                </p>
+            </div>
+        )}
+
+        {/* View All Button */}
+        <div className="text-center mt-0">
+            <button
+                onClick={() => setView({ page: "listing" })}
+                className="px-8 py-3 rounded-full bg-[#1f4fa8] text-white
+                font-semibold shadow-lg hover:bg-[#163a7a]
+                transition-all text-sm md:text-base mt-5"
+                style={{ fontFamily: "Roboto, sans-serif" }}
+            >
+                View All Colleges
+            </button>
+        </div>
+
+    </div>
+</section>
+
+          {/* Top Study Places Section */}
+ <section className="py-3 bg-[#F8F9FA] relative overflow-hidden">
+  <div
+    className="absolute inset-0 bg-left bg-no-repeat bg-contain opacity-10 pointer-events-none"
+    style={{
+      backgroundImage:
+        "url('https://upload.wikimedia.org/wikipedia/commons/thumb/9/99/India_Map.png/960px-India_Map.png?20191107232049')",
+    }}
+  ></div>
+
+  <div className="max-w-7xl mx-auto px-6">
+
+    {/* HEADING */}
+    <h2 className="text-center text-[28px] md:text-[32px] font-bold text-[#0A225A] leading-[38px] md:leading-[42px] mt-4">
+      Find Colleges Near You!
+    </h2>
+
+    <p className="text-[14px] md:text-[16px] leading-[20px] md:leading-[24px] text-black text-center mt-1">
+      Search by city to <span className="text-[#0CC25F] font-semibold">Explore Top Colleges</span> in your area.
+    </p>
+
+    {/* SEARCH BAR */}
+    <div className="mt-6 md:mt-8 flex justify-center">
+      <div className="flex gap-3 items-center w-full max-w-2xl max-md:flex-col">
+
+        <div className="relative flex-1 w-full">
+          <input
+            type="text"
+            placeholder="Search city or location..."
+            value={query}
+  onChange={(e) => setQuery(e.target.value)}
+            className="
+              w-full py-3 md:py-4 pl-12 pr-4 rounded-xl border border-gray-300 
+              shadow-sm bg-white text-gray-700 
+              focus:ring-2 focus:ring-[#0A225A] focus:border-[#0A225A]
+              max-md:text-sm
+            "
+          />
+          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-lg">🔍</span>
+        </div>
+
+        <button
+         onClick={handleCitySearch}
+          className="
+            px-6 py-3 md:py-4 rounded-xl text-white font-semibold 
+            bg-[#0A225A] hover:bg-[#071a3f]
+            shadow-md transition
+            w-full md:w-auto max-md:text-sm
+          "
+        >
+          Search Now
+        </button>
+
+      </div>
+    </div>
+    {error && (
+  <p className="text-red-600 text-sm mt-2 text-center">{error}</p>
+)}
+
+    {/* CITY SCROLLER */}
+    <div className="relative mt-8 md:mt-10">
+
+      {/* LEFT ARROW (desktop only) */}
+      <button
+        onClick={() =>
+          document.getElementById("cityCarousel")?.scrollBy({ left: -250, behavior: "smooth" })
+        }
+        className="hidden md:flex items-center justify-center absolute left-[-30px] top-1/2 
+                 -translate-y-1/2 h-12 w-12 bg-white shadow-lg border border-gray-200 
+                 rounded-full z-20 hover:scale-110 transition"
+      >
+        <svg width="22" height="22" fill="none" viewBox="0 0 24 24">
+          <path
+            d="M15 19L8 12L15 5"
+            stroke="#0A2A6C"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </button>
+
+      {/* SCROLLABLE ROW */}
+      <div
+        id="cityCarousel"
+        className="
+          flex gap-4 md:gap-6
+          overflow-x-auto scroll-smooth scrollbar-hide
+          snap-x snap-mandatory
+          pb-3 pr-2
+
+          /* MOBILE FIX */
+          max-md:overflow-x-scroll
+          max-md:pl-1
+        "
+      >
+        {[
+          { name: "Delhi NCR", icon: "/icons/gate-of-india.png" },
+          { name: "Bangalore", icon: "/icons/bangalore.png" },
+          { name: "Hyderabad", icon: "/icons/red-fort_3806647.png" },
+          { name: "Pune", icon: "/icons/arch_2189457.png" },
+          { name: "Mumbai", icon: "/icons/temple_6482997.png" },
+          { name: "Chennai", icon: "/icons/temple_510019.png" },
+          { name: "Kolkata", icon: "/icons/gate.png" },
+          { name: "Lucknow", icon: "/icons/lighthouse_8162871.png" },
+          {name:"Kanpur" , icon: "/icons/university.png"}
+        ].map((city, index) => (
+          <div
+        
+            key={index}
+             ref={cityRefs[city.name]}  
+            onClick={() => 
+                
+                setView({ page: "listing",
+  filters: { city: city.name }})}
+            className={`
+                  min-w-[130px] md:min-w-[150px]
+              h-[135px] md:h-[150px]
+              bg-white rounded-2xl border border-gray-200 
+              shadow-md hover:shadow-xl 
+              snap-start p-4 md:p-6 cursor-pointer 
+              flex flex-col items-center justify-center transition
+               ${activeCity === city.name ? "bg-blue-100 border-blue-500 scale-105" : "bg-white"}
+                
+                
+                
+                
+                `}
+            
+          >
+            <div className="h-12 w-12 md:h-14 md:w-14 flex items-center justify-center">
+              <img src={city.icon} alt={city.name} className="h-10 w-10 md:h-12 md:w-12 object-contain" />
+            </div>
+
+            <p className="font-bold text-sm md:text-lg text-[#0A2A6C] mt-2 md:mt-3">
+              {city.name}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      {/* RIGHT ARROW (desktop only) */}
+      <button
+        onClick={() =>
+          document.getElementById("cityCarousel")?.scrollBy({ left: 250, behavior: "smooth" })
+        }
+        className="hidden md:flex items-center justify-center absolute right-[-30px] top-1/2 
+                 -translate-y-1/2 h-12 w-12 bg-white shadow-lg border border-gray-200 
+                 rounded-full z-20 hover:scale-110 transition"
+      >
+        <svg width="22" height="22" fill="none" viewBox="0 0 24 24">
+          <path
+            d="M9 5L16 12L9 19"
+            stroke="#0A2A6C"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </button>
+
+    </div>
+
+  </div>
+</section>
+
+
+{/* EXPLORE COURSES SECTION */}
+<section className="py-16 bg-white">
+  <div className="max-w-7xl mx-auto px-6">
+
+    {/* Heading */}
+    <div className="flex items-center gap-3 mb-6">
+      <svg width="35" height="35" viewBox="0 0 24 24" stroke="#0A225A" fill="none">
+        <path strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+          d="M4 4h16v12H4z M4 16l8 4 8-4" />
+      </svg>
+      <h2 className="text-3xl font-extrabold text-[#0A225A]">
+        Explore Courses
+      </h2>
+    </div>
+
+    {/* FILTER BY LEVEL ONLY */}
+    <div className="mb-8">
+      <h3 className="font-bold text-lg text-[#0A225A] mb-3">Filter by Level</h3>
+      <div className="flex gap-3 flex-wrap">
+
+        {exploreLevels.map((level) => (
+          <button
+            key={level}
+            onClick={() => setExploreLevel(level)}
+            className={`
+              px-4 py-2 rounded-full border font-medium text-sm transition
+              ${
+                exploreLevel === level
+                  ? "bg-[#0A225A] text-white border-[#0A225A]"
+                  : "bg-white text-[#0A225A] border-gray-300 hover:bg-gray-100"
+              }
+            `}
+          >
+            {level}
+          </button>
+        ))}
+
+      </div>
+    </div>
+
+    {/* FILTERED COURSE LIST */}
+    <button
+      onClick={() =>
+        document.getElementById("courseScroll")?.scrollBy({ left: -300, behavior: "smooth" })
+      }
+      className="hidden md:flex items-center justify-center absolute left-4 mt-[150px]
+      h-10 w-10 bg-white text-[#0A225A] rounded-full shadow-xl hover:scale-110 transition border"
+    >
+      ←
+    </button>
+
+    <div
+      id="courseScroll"
+      className="flex gap-6 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-4 px-2"
+      style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+    >
+      {courses
+        .filter((course) =>
+          exploreLevel === "All" ? true : course.level === exploreLevel
+        )
+        .slice(0, 10)
+        .map((course, index) => (
+          <div
+            key={index}
+            onClick={() =>
+              setView({
+                page: "course-detail",
+                courseIds: [course.id],
+                courseKey: course.courseKey
+              })
+            }
+            className="
+              min-w-[260px] snap-start p-5 cursor-pointer
+              bg-white rounded-2xl border border-gray-200 
+              shadow-[0_4px_12px_rgba(0,0,0,0.08)]
+              transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(0,0,0,0.12)]
+            "
+          >
+            {/* Top Tags */}
+            <div className="flex justify-between mb-3 text-xs">
+              <span className="bg-gray-100 px-3 py-1 rounded-md font-semibold text-gray-700">
+                {course.type || "Full Time"}
+              </span>
+              <span className="bg-gray-100 px-3 py-1 rounded-md font-semibold text-gray-700">
+                {course.duration || "NA"}
+              </span>
+            </div>
+
+            {/* Title */}
+            <h3 className="text-lg font-bold text-slate-900 mb-3 leading-tight">
+              {course.name}
+            </h3>
+
+            {/* Info Boxes */}
+            <div className="grid grid-cols-2 gap-3 text-xs mb-4">
+
+              <div className="bg-gray-50 p-3 rounded-md border flex flex-col">
+                <span className="text-gray-500 text-[11px]">Duration</span>
+                <span className="font-semibold">{course.duration || "NA"}</span>
+              </div>
+
+              <div className="bg-gray-50 p-3 rounded-md border flex flex-col">
+                <span className="text-gray-500 text-[11px]">Avg. Fees</span>
+                <span className="font-semibold">
+                  ₹{course.fees || "NA"}
+                </span>
+              </div>
+
+              <div className="bg-gray-50 p-3 rounded-md border flex flex-col">
+                <span className="text-gray-500 text-[11px]">Colleges</span>
+                <span className="font-semibold">
+               {
+  colleges.filter(col =>
+    col.courses?.some(c => c.name === course.name)
+  ).length
+}
+
+                </span>
+              </div>
+
+              <div className="bg-gray-50 p-3 rounded-md border flex flex-col">
+                <span className="text-gray-500 text-[11px]">Level</span>
+                <span className="font-semibold">
+                  {course.level || "General"}
+                </span>
+              </div>
+
+            </div>
+
+            {/* Footer */}
+            <div className="flex justify-between items-center pt-3 border-t">
+              <button className="text-[#0A225A] text-[12px] font-semibold hover:underline">
+                Course Overview →
+              </button>
+
+              <button className="bg-green-500 text-white px-2 py-2 rounded-full text-[11px] font-semibold hover:bg-green-600">
+                View Details
+              </button>
+            </div>
+          </div>
+        ))}
+    </div>
+
+    {/* Right Arrow */}
+    <button
+      onClick={() =>
+        document.getElementById("courseScroll")?.scrollBy({ left: 300, behavior: "smooth" })
+      }
+      className="hidden md:flex items-center justify-center absolute right-4 mt-[-160px]
+      h-10 w-10 bg-white text-[#0A225A] rounded-full shadow-xl hover:scale-110 transition border"
+    >
+      →
+    </button>
+
+    {/* VIEW ALL */}
+    <div className="flex justify-center mt-10">
+      <button
+        onClick={() => setView({ page: "courses" })}
+        className="bg-[#0A225A] text-white px-10 py-3 text-lg rounded-full font-semibold shadow-lg hover:bg-[#071a3f] transition"
+      >
+        View All Courses
+      </button>
+    </div>
+
+  </div>
+</section>
+
+
+{/* Trusted by Students Section testimonials  */}
+<section className="py-12 bg-[#f4f6fb]">
+  <div className="max-w-6xl mx-auto px-6">
+
+    <h2 className="text-lg md:text-xl font-semibold text-[#0A225A] mb-6">
+      Student Reviews & Testimonials
+    </h2>
+
+    {/* MOBILE: Horizontal scroll */}
+    <div
+      className="
+        flex md:hidden
+        gap-4 overflow-x-auto scroll-smooth
+        snap-x snap-mandatory
+        pb-3
+        scrollbar-hide
+      "
+    >
+      {TESTIMONIALS_DATA.map((t, i) => (
+        <div
+          key={i}
+          className="
+            min-w-[80%] snap-start
+            bg-white rounded-2xl shadow-md border border-gray-200
+            p-5 flex flex-col gap-3
+          "
+        >
+          <div className="flex items-center gap-3">
+            <img src={t.avatarUrl} className="h-10 w-10 rounded-full object-cover" />
+            <div>
+              <p className="font-semibold text-sm text-slate-900">{t.name}</p>
+              <p className="text-[11px] text-slate-500">{t.college}</p>
+            </div>
+          </div>
+
+          <p className="text-xs text-slate-600">
+            “{t.quote}”
+          </p>
+
+          <p className="text-[11px] text-yellow-500">★★★★★</p>
+        </div>
+      ))}
+    </div>
+
+    {/* DESKTOP: 3-column grid */}
+    <div className="hidden md:grid md:grid-cols-3 gap-6 mt-4">
+      {TESTIMONIALS_DATA.map((t, i) => (
+        <div
+          key={i}
+          className="
+            bg-white rounded-2xl shadow-md border border-gray-200
+            p-5 flex flex-col h-full
+          "
+        >
+          <div className="flex items-center gap-3 mb-3">
+            <img src={t.avatarUrl} className="h-10 w-10 rounded-full object-cover" />
+            <div>
+              <p className="font-semibold text-sm text-slate-900">{t.name}</p>
+              <p className="text-[11px] text-slate-500">{t.college}</p>
+            </div>
+          </div>
+
+          <p className="text-xs text-slate-600 flex-grow">
+            “{t.quote}”
+          </p>
+
+          <p className="text-[11px] text-yellow-500 mt-3">★★★★★</p>
+        </div>
+      ))}
+    </div>
+
+  </div>
+</section>
+
+{/* Trusted by Students Section */}
+<section className="py-16 bg-white">
+  <div className="max-w-7xl mx-auto px-6 text-center">
+
+    <h2 className="text-lg md:text-xl font-semibold text-[#0A225A] mb-10">
+      Trusted by Students from Top Institutions
+    </h2>
+
+    {/* SLIDER WRAPPER */}
+    <div className="overflow-hidden relative">
+
+      {/* SLIDER (infinite scroll) */}
+      <div className="flex items-center gap-16 animate-logoScroll whitespace-nowrap">
+
+        <img src="/logos/doon.png" className="h-14  hover:grayscale-0 transition" />
+        <img src="/logos/download.jpg" className="h-14  hover:grayscale-0 transition" />
+        <img src="/logos/ITM.png" className="h-14 hover:grayscale-0 transition" />
+        <img src="/logos/NBS.jpg" className="h-14 hover:grayscale-0 transition" />
+        <img src="/logos/StudyCups.png" className="h-14 hover:grayscale-0 transition" />
+
+        {/* Duplicate logos for infinite loop */}
+        <img src="/logos/doon.png" className="h-14 hover:grayscale-0 transition" />
+        <img src="/logos/download.jpg" className="h-14  hover:grayscale-0 transition" />
+        <img src="/logos/ITM.png" className="h-14 hover:grayscale-0 transition" />
+        <img src="/logos/NBS.jpg" className="h-14  hover:grayscale-0 transition" />
+        <img src="/logos/StudyCups.png" className="h-14 hover:grayscale-0 transition" />
+
+      </div>
+    </div>
+  </div>
+</section>
+
+
+   {/* -------------------------------------------------- */}
+{/* EXPLORE EXAMS SECTION (Updated with unique stream filters) */}
+{/* -------------------------------------------------- */}
+
+<section className="py-10 bg-white">
+  
+  {/* Build unique streams from backend exam.stream */}
+  {(() => {
+    const uniqueStreams = new Set<string>();
+    exams.forEach((exam) => {
+      if (exam.stream) uniqueStreams.add(exam.stream.trim());
+    });
+    var examFilters = ["All", ...Array.from(uniqueStreams)];
+    return null;
+  })()}
+
+  {/* Exam Filters */}
+  <div className="flex gap-2 flex-wrap mb-6 justify-center">
+    {["All", ...Array.from(
+      new Set(exams.map((e) => e.stream?.trim()).filter(Boolean))
+    )].map((stream) => (
+      <button
+        key={stream}
+        onClick={() => setSelectedExamFilter(stream)}
+        className={`px-4 py-2 rounded-full text-sm font-medium border transition
+          ${
+            selectedExamFilter === stream
+              ? "bg-[#1f4fa8] text-white border-[#1f4fa8]"
+              : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50"
+          }
+        `}
+      >
+        {stream}
+      </button>
+    ))}
+  </div>
+
+  <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+
+    {/* Heading */}
+    <div className="mb-6">
+      <h2 className="text-[24px] md:text-[28px] font-bold text-slate-900">
+        Top Exams
+      </h2>
+    </div>
+
+    {/* Filtered Exams */}
+    <div className="relative">
+      <div
+        id="examCarousel"
+        className="flex gap-5 overflow-x-auto scroll-smooth pb-3 px-1 scrollbar-hide"
+      >
+        {exams
+          .filter((exam) =>
+            selectedExamFilter === "All"
+              ? true
+              : exam.stream?.trim() === selectedExamFilter
+          )
+          .map((exam) => (
+            <div
+              key={exam.id}
+              onClick={() => setView({ page: "exam-detail", examId: exam.id })}
+              className="
+                min-w-[290px] max-w-[290px]
+                bg-white border border-gray-200 rounded-xl 
+                shadow-sm hover:shadow-md cursor-pointer 
+                transition-all p-5
+              "
+            >
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <img
+                    src={exam.logoUrl}
+                    className="h-10 w-10 rounded-full border object-contain"
+                    alt={exam.name}
+                  />
+                  <div>
+                    <p className="font-semibold text-sm text-slate-900">
+                      {exam.name}
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      {exam.conductingBody}
+                    </p>
+                  </div>
+                </div>
+
+                <span className="text-[11px] bg-gray-100 px-2 py-1 rounded-full text-gray-600">
+                  {exam.stream || "Exam"}
+                </span>
+              </div>
+
+              <div className="border-t pt-3">
+                <p className="text-xs text-gray-500">Exam Date</p>
+                <p className="font-semibold text-[#1f4fa8] text-sm">
+                  {exam.date || "To be announced"}
+                </p>
+              </div>
+
+              <div className="mt-3">
+                <div className="flex justify-between py-2 border-t">
+                  <p className="text-sm font-medium text-slate-800">
+                    Application Process
+                  </p>
+                  <span className="text-lg text-slate-600">›</span>
+                </div>
+
+                <div className="flex justify-between py-2 border-t">
+                  <p className="text-sm font-medium text-slate-800">Exam Info</p>
+                  <span className="text-lg text-slate-600">›</span>
+                </div>
+              </div>
+            </div>
+          ))}
+      </div>
+
+      {/* Right Arrow */}
+      <button
+        onClick={() =>
+          document
+            .getElementById("examCarousel")
+            ?.scrollBy({ left: 300, behavior: "smooth" })
+        }
+        className="
+          hidden md:flex items-center justify-center
+          absolute right-[-25px] top-1/2 -translate-y-1/2
+          h-12 w-12 rounded-full shadow-xl bg-white border
+          hover:scale-110 transition
+        "
+      >
+        <span className="text-xl">›</span>
+      </button>
+    </div>
+
+  </div>
+</section>
+
+
+
+            {/* -------------------------------------------------- */}
+            {/* COLLEGE RANKING TABLE (Image 2 middle)            */}
+            {/* -------------------------------------------------- */}
+
+         {/* Ranking Table Container */}
+<div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-md mt-8 max-w-7xl mx-auto">
+
+  {/* TABLE HEAD SECTION */}
+  <div className="px-5 pt-6 pb-3">
+    <h2 className="text-2xl font-bold text-slate-900">Top 10 Colleges</h2>
+  </div>
+
+  {/* STREAM FILTERS */}
+<div className="flex flex-wrap gap-3 px-5 pb-4 border-b border-slate-200">
+
+  {["All", ...streamFilters].map((item) => (
+    <button
+      key={item}
+      onClick={() => setSelectedtopcollge(item)}
+      className={`px-4 py-2 rounded-full text-sm border transition
+        ${selectedtopcollge === item
+          ? "bg-blue-600 text-white border-blue-600"
+          : "bg-white border-slate-300 hover:bg-slate-100"
+        }
+      `}
+    >
+      {item}
+    </button>
+  ))}
+
+</div>
+
+
+  {/* TABLE */}
+  <div className="overflow-x-auto">
+    <table className="w-full border-collapse">
+
+      {/* TABLE HEAD */}
+      <thead>
+        <tr className="bg-slate-100 text-salt-700 text-sm border-b">
+          <th className="px-6 py-3 text-left w-20">Rank</th>
+          <th className="px-6 py-3 text-left">College</th>
+          <th className="px-6 py-3 text-left w-48">Ranking</th>
+          <th className="px-6 py-3 text-left w-48">Cutoff</th>
+          <th className="px-6 py-3 text-left w-48">Application Deadline</th>
+          <th className="px-6 py-3 text-left w-40">Fees</th>
+        </tr>
+      </thead>
+
+      {/* TABLE BODY */}
+   <tbody>
+  {displayedColleges.map((college, index) => (
+   <tr
+  key={college.id}
+  className={`
+    border-b text-sm
+    ${index % 2 === 0 ? "bg-[#f5f9ff]" : "bg-white"}
+  `}
+>
+
+      <td className="px-6 py-4 font-semibold text-slate-900">#{index + 1}</td>
+
+      <td className="px-6 py-4">
+        <div className="flex items-start gap-3">
+          <img
+            src={college.logoUrl}
+            className="h-10 w-10 rounded-full object-cover border"
+          />
+          <div>
+            <p className="font-semibold text-[15px] leading-tight text-slate-800">
+              {college.name}
+            </p>
+            <p className="text-xs text-slate-600 mt-0.5">
+              {college.city}, {college.state} |
+              <span className="ml-1 text-yellow-500 font-semibold">⭐ {college.rating}</span>
+            </p>
+          </div>
+        </div>
+      </td>
+
+      <td className="px-6 py-4 text-slate-700">{college.rankingText}</td>
+      <td className="px-6 py-4 text-slate-700">{college.cutoffText}</td>
+      <td className="px-6 py-4 text-slate-700">{college.deadline}</td>
+
+      <td className="px-6 py-4 font-bold text-slate-900">
+        {college.fees}
+        <p className="text-xs text-slate-500 font-normal">1st Year Fees</p>
+      </td>
+    </tr>
+  ))}
+</tbody>
+
+    </table>
+  </div>
+</div>
+
+            {/* -------------------------------------------------- */}
+            {/* OPTIONAL: FAQ + BLOG + CONTACT (keep functionality) */}
+            {/* (You can remove these if you strictly want home to  */}
+            {/* end at the gradient footer below.)                 */}
+            {/* -------------------------------------------------- */}
+
+            <section className="py-16 bg-white">
+                <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="text-center mb-10">
+                        <h2 className="text-xl md:text-2xl font-bold text-slate-900">
+                            Frequently Asked Questions
+                        </h2>
+                        <p className="text-sm text-slate-500 mt-2 max-w-xl mx-auto">
+                            Have questions? We’ve got answers. You can also reach out to us
+                            directly from the contact section.
+                        </p>
                     </div>
-                    
-                    <div className="flex flex-wrap justify-center gap-3 md:gap-4 mb-12">
-                        {streams.map(stream => (
-                             <button
-                                key={stream}
-                                onClick={() => setSelectedStream(stream)}
-                                className={`px-5 py-2.5 md:px-6 md:py-3 font-semibold rounded-full text-sm md:text-base transition-all duration-300 shadow-sm transform hover:scale-105 ${
-                                    selectedStream === stream
-                                        ? 'bg-[--primary-medium] text-white shadow-lg'
-                                        : 'bg-white text-slate-700 hover:bg-[--primary-medium]/10'
-                                }`}
+                    <div className="max-w-3xl mx-auto space-y-4">
+                        {faqs.map((faq, index) => (
+                            <div
+                                key={index}
+                                className="bg-slate-50 border border-slate-200 rounded-2xl overflow-hidden"
                             >
-                                {stream}
-                            </button>
-                        ))}
-                    </div>
-
-                    {filteredColleges.length > 0 ? (
-                        <div className="relative -mx-4">
-                            <div className="flex overflow-x-auto space-x-8 pb-6 px-4 no-scrollbar">
-                                {filteredColleges.map((college, index) => (
-                                    <div key={college.id} className="flex-shrink-0 w-[85vw] sm:w-[45vw] md:w-[30vw] lg:w-[24vw]">
-                                        <AnimatedContainer delay={index * 100}>
-                                            <CollegeCard college={college} setView={setView} />
-                                        </AnimatedContainer>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="text-center py-10 bg-white rounded-lg shadow-sm">
-                            <h3 className="text-xl font-semibold text-slate-700">No Colleges Match Your Criteria</h3>
-                            <p className="text-slate-500 mt-2">Try adjusting your filters or view all colleges.</p>
-                        </div>
-                    )}
-                    
-                    <div className="text-center mt-12">
-                        <button 
-                            onClick={() => setView({ page: 'listing' })}
-                            className="px-6 py-3 font-semibold text-white bg-[--primary-medium] rounded-lg shadow-md hover:bg-[--primary-dark] transition-all"
-                        >
-                            View All Colleges
-                        </button>
-                    </div>
-                </div>
-            </section>
-
-             {/* Exams Section */}
-             <section className="py-16 bg-white">
-                <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                    <h2 className="text-3xl font-extrabold text-center mb-10">Popular Exams</h2>
-                    <div className="relative -mx-4">
-                        <div className="flex overflow-x-auto space-x-8 pb-6 px-4 no-scrollbar">
-                            {EXAMS_DATA.slice(0, 6).map((exam, index) => (
-                                <div key={exam.id} className="flex-shrink-0 w-[85vw] sm:w-[45vw] md:w-[30vw] lg:w-[24vw]">
-                                    <AnimatedContainer delay={index * 100}>
-                                        <div 
-                                            className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 overflow-hidden group cursor-pointer h-full flex flex-col border"
-                                            onClick={() => setView({ page: 'exam-detail', examId: exam.id })}
-                                        >
-                                            <div className="p-6 relative">
-                                                <StreamTag stream={exam.stream} />
-                                                <img src={exam.logoUrl} alt={`${exam.name} logo`} className="h-20 w-20 rounded-full flex-shrink-0 bg-slate-100 p-2" />
-                                            </div>
-                                            <div className="p-6 pt-0 flex flex-col flex-grow">
-                                                <h2 className="text-2xl font-bold text-slate-800">{exam.name}</h2>
-                                                <p className="text-sm text-slate-500 mt-1 flex-grow">{exam.conductingBody}</p>
-                                                <div className="mt-6 border-t pt-4">
-                                                    <p className="text-xs font-semibold text-slate-400">EXAM DATE</p>
-                                                    <p className="font-bold text-[--primary-medium] text-lg">{exam.date}</p>
-                                                </div>
-                                            </div>
-                                            <div className="bg-slate-50 group-hover:bg-[--primary-medium] p-4 text-center font-semibold text-[--primary-medium] group-hover:text-white transition-all duration-300">
-                                                View Details &rarr;
-                                            </div>
-                                        </div>
-                                    </AnimatedContainer>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                     <div className="text-center mt-12">
-                        <button 
-                            onClick={() => setView({ page: 'exams' })}
-                            className="px-6 py-3 font-semibold text-[--primary-medium] border-2 border-[--primary-medium] rounded-lg hover:bg-[--primary-medium]/10 transition-all"
-                        >
-                            Explore All Exams
-                        </button>
-                    </div>
-                </div>
-            </section>
-            
-            {/* FAQ Section */}
-            <section className="py-16 bg-slate-50">
-                <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="text-center mb-12">
-                        <h2 className="text-3xl font-extrabold text-slate-800">Frequently Asked Questions</h2>
-                        <p className="mt-2 text-slate-500 max-w-2xl mx-auto">
-                            Have questions? We've got answers. If you can't find what you're looking for, feel free to contact us.
-                        </p>
-                    </div>
-                    <div className="max-w-3xl mx-auto">
-                        <div className="space-y-4">
-                            {faqs.map((faq, index) => (
-                                <div key={index} className="bg-white rounded-xl shadow-sm border border-slate-200/80 overflow-hidden transition-all duration-300">
-                                    <button
-                                        onClick={() => toggleFaq(index)}
-                                        className="w-full flex justify-between items-center text-left p-6"
+                                <button
+                                    onClick={() => toggleFaq(index)}
+                                    className="w-full flex justify-between items-center px-5 py-4 text-left"
+                                >
+                                    <span className="text-sm font-semibold text-slate-900">
+                                        {faq.question}
+                                    </span>
+                                    <span
+                                        className={`transform transition-transform ${openFaq === index ? "rotate-45" : "rotate-0"
+                                            }`}
                                     >
-                                        <span className="font-semibold text-lg text-slate-800">{faq.question}</span>
-                                        <span className={`transform transition-transform duration-300 ${openFaq === index ? 'rotate-45' : 'rotate-0'}`}>
-                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-[--primary-medium]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
-                                        </span>
-                                    </button>
-                                    <div className={`transition-all duration-500 ease-in-out grid ${openFaq === index ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
-                                        <div className="overflow-hidden">
-                                            <div className="px-6 pb-6 pt-0">
-                                                <p className="text-slate-600 leading-relaxed">{faq.answer}</p>
-                                            </div>
-                                        </div>
+                                        <svg
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            className="h-5 w-5 text-[--primary-medium]"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                            stroke="currentColor"
+                                        >
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M12 4v16m8-8H4"
+                                            />
+                                        </svg>
+                                    </span>
+                                </button>
+                                {openFaq === index && (
+                                    <div className="px-5 pb-4 pt-0 text-xs text-slate-600">
+                                        {faq.answer}
                                     </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-
-            {/* Testimonials Section */}
-            <section className="py-16 bg-white">
-                <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                    <h2 className="text-3xl font-extrabold text-center mb-12">What Our Students Say</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        {TESTIMONIALS_DATA.map((testimonial, index) => (
-                             <AnimatedContainer key={testimonial.id} delay={index * 100}>
-                                <div className="bg-slate-50 p-8 rounded-2xl border h-full flex flex-col text-center transform hover:-translate-y-2 transition-transform duration-300 relative overflow-hidden">
-                                    <svg className="absolute -top-8 -left-8 w-32 h-32 text-slate-200/50 transform rotate-12" fill="currentColor" viewBox="0 0 16 16">
-                                        <path d="M12 12a1 1 0 0 0 1-1V8.558a1 1 0 0 0-1-1h-1.388c0-.351.021-.703.062-1.054.062-.372.166-.703.31-.992.145-.29.331-.517.559-.683.227-.186.516-.279.868-.279V3c-.579 0-1.085.124-1.52.372a3.322 3.322 0 0 0-1.085.992 4.92 4.92 0 0 0-.62 1.458A7.712 7.712 0 0 0 9 7.558V11a1 1 0 0 0 1 1h2Zm-6 0a1 1 0 0 0 1-1V8.558a1 1 0 0 0-1-1H4.612c0-.351.021-.703.062-1.054.062-.372.166-.703.31-.992.145-.29.331-.517.559-.683.227-.186.516-.279.868-.279V3c-.579 0-1.085.124-1.52.372a3.322 3.322 0 0 0-1.085.992 4.92 4.92 0 0 0-.62 1.458A7.712 7.712 0 0 0 3 7.558V11a1 1 0 0 0 1 1h2Z"/>
-                                    </svg>
-                                    <div className="relative z-10 flex-grow flex flex-col">
-                                        <img src={testimonial.avatarUrl} alt={testimonial.name} className="w-20 h-20 rounded-full mb-5 mx-auto ring-4 ring-white object-cover shadow-md" />
-                                        <p className="font-medium text-lg text-slate-700 leading-relaxed flex-grow">"{testimonial.quote}"</p>
-                                        <div className="w-16 h-0.5 bg-[--primary-medium]/30 mx-auto my-6"></div>
-                                        <div className="mt-auto">
-                                            <p className="font-bold text-slate-800 text-lg">{testimonial.name}</p>
-                                            <p className="text-sm text-[--primary-medium] font-semibold">{testimonial.college}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </AnimatedContainer>
+                                )}
+                            </div>
                         ))}
                     </div>
                 </div>
             </section>
 
-            {/* Blog Section */}
-            <section className="py-16 bg-slate-50">
-                <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                    <h2 className="text-3xl font-extrabold text-center mb-10">Latest from our Blog</h2>
-                    <div className="relative -mx-4">
-                        <div className="flex overflow-x-auto space-x-8 pb-6 px-4 no-scrollbar">
-                            {BLOG_POSTS_DATA.map((post, index) => (
-                                <div key={post.id} className="flex-shrink-0 w-[85vw] sm:w-[45vw] md:w-[30vw] lg:w-[24vw]">
-                                    <AnimatedContainer delay={index * 100}>
-                                        <div 
-                                            className="bg-white rounded-2xl shadow-lg overflow-hidden cursor-pointer group h-full flex flex-col transform hover:-translate-y-2 transition-transform duration-300 border" 
-                                            onClick={() => setView({ page: 'blog-detail', postId: post.id })}
-                                        >
-                                            <div className="relative overflow-hidden">
-                                                <img src={post.imageUrl} alt={post.title} className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"/>
-                                            </div>
-                                            <div className="p-6 flex flex-col flex-grow">
-                                                <div className="mb-3">
-                                                    <span className={`text-xs font-bold px-3 py-1 rounded-full ${blogCategoryColors[post.category] || 'bg-slate-100 text-slate-800'}`}>{post.category}</span>
-                                                </div>
-                                                <h3 className="text-lg font-bold text-slate-800 leading-tight flex-grow group-hover:text-[--primary-medium] transition-colors duration-300">{post.title}</h3>
-                                                <p className="text-slate-600 text-sm mt-2" style={{ display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                                                    {post.excerpt}
-                                                </p>
-                                                <div className="mt-auto pt-4">
-                                                    <span className="font-semibold text-[--primary-medium] flex items-center gap-2 group-hover:gap-3 transition-all duration-300">
-                                                        Read More 
-                                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </AnimatedContainer>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                     <div className="text-center mt-12">
-                        <button 
-                            onClick={() => setView({ page: 'blog' })}
-                            className="px-6 py-3 font-semibold text-[--primary-medium] border-2 border-[--primary-medium] rounded-lg hover:bg-[--primary-medium]/10 transition-all"
-                        >
-                            Read More Articles
-                        </button>
-                    </div>
+            {/* Blog preview */}
+         <section className="py-16 bg-[#f4f6fb]">
+  <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+
+    <h2 className="text-xl md:text-2xl font-bold text-slate-900 mb-8">
+      Latest from our Blog
+    </h2>
+
+    {/* MOBILE: horizontal scroll */}
+    <div
+      className="
+        flex md:hidden 
+        gap-4 overflow-x-auto scroll-smooth 
+        snap-x snap-mandatory pb-4 scrollbar-hide
+      "
+    >
+      {BLOG_POSTS_DATA.slice(0, 3).map((post, index) => (
+        <div
+          key={post.id}
+          onClick={() =>
+            setView({ page: 'blog-detail', postId: post.id } as any)
+          }
+          className="
+            min-w-[85%] snap-start
+            bg-white rounded-2xl shadow-md border border-slate-100 
+            overflow-hidden cursor-pointer flex flex-col
+          "
+        >
+          <div className="h-36 overflow-hidden">
+            <img
+              src={post.imageUrl}
+              alt={post.title}
+              className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+            />
+          </div>
+
+          <div className="px-5 py-4 flex flex-col">
+            <span
+              className={`
+                text-[10px] font-semibold px-2 py-1 rounded-full 
+                ${blogCategoryColors[post.category] || "bg-slate-100 text-slate-700"}
+              `}
+            >
+              {post.category}
+            </span>
+
+            <h3 className="text-sm font-semibold text-slate-900 mt-2">
+              {post.title}
+            </h3>
+
+            <p className="text-[11px] text-slate-600 line-clamp-3 mt-1">
+              {post.excerpt}
+            </p>
+
+            <span className="mt-3 text-[11px] font-semibold text-[#1f4fa8]">
+              Read More →
+            </span>
+          </div>
+        </div>
+      ))}
+    </div>
+
+    {/* DESKTOP: 3 column grid */}
+    <div className="hidden md:grid grid-cols-3 gap-6">
+      {BLOG_POSTS_DATA.slice(0, 3).map((post, index) => (
+        <AnimatedContainer key={post.id} delay={index * 80}>
+          <div
+            onClick={() =>
+              setView({ page: 'blog-detail', postId: post.id } as any)
+            }
+            className="
+              bg-white rounded-2xl shadow-md border border-slate-100 
+              overflow-hidden cursor-pointer flex flex-col h-full
+            "
+          >
+            <div className="h-40 overflow-hidden">
+              <img
+                src={post.imageUrl}
+                alt={post.title}
+                className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+              />
+            </div>
+
+            <div className="px-5 py-4 flex flex-col flex-grow">
+              <span
+                className={`
+                  text-[10px] font-semibold px-2 py-1 rounded-full 
+                  ${blogCategoryColors[post.category] || "bg-slate-100 text-slate-700"}
+                `}
+              >
+                {post.category}
+              </span>
+
+              <h3 className="text-sm font-semibold text-slate-900 mt-2 flex-grow">
+                {post.title}
+              </h3>
+
+              <p className="text-[11px] text-slate-600 line-clamp-3">
+                {post.excerpt}
+              </p>
+
+              <span className="mt-3 text-[11px] font-semibold text-[#1f4fa8]">
+                Read More →
+              </span>
+            </div>
+          </div>
+        </AnimatedContainer>
+      ))}
+    </div>
+
+    {/* VIEW ALL BUTTON */}
+    <div className="text-center mt-10">
+      <button
+        onClick={() => setView({ page: 'blog' })}
+        className="
+          inline-flex items-center justify-center px-6 py-2.5 rounded-full 
+          border border-[#1f4fa8] text-[#1f4fa8] text-sm font-semibold 
+          hover:bg-[#1f4fa8]/5
+        "
+      >
+        View all articles
+      </button>
+    </div>
+
+  </div>
+</section>
+
+
+            {/* Contact section */}
+        <section className="py-8 bg-white">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        {/* Heading */}
+        <div className="text-center mb-10">
+            <h2 className="text-xl md:text-2xl font-bold text-slate-900">
+                Get In Touch
+            </h2>
+            <p className="text-lg text-slate-500 mt-2 max-w3xl mx-auto">
+                Have questions about admissions, courses, or anything else? We're here to help.
+            </p>
+        </div>
+
+        {/* Two Column Layout */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pb-4 md:pb-0">
+
+            {/* LEFT SIDE IMAGE + CONTACT INFO CARD */}
+            <div className="flex flex-col gap-4 h-auto md:h-[520px]">
+
+                {/* IMAGE BLOCK */}
+                <div className="w-full h-[200px] md:h-[260px] rounded-3xl overflow-hidden shadow-md flex-shrink-0">
+                    <img 
+                        src="/icons/studycups_contact.png" 
+                        alt="StudyCups Support" 
+                        className="w-full h-full object-cover"
+                    />
                 </div>
-            </section>
-            
-            {/* Contact Section */}
-            <section className="py-16 bg-white">
-                <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="text-center mb-12">
-                        <h2 className="text-3xl font-extrabold text-slate-800">Get In Touch</h2>
-                        <p className="mt-2 text-slate-500 max-w-2xl mx-auto">
-                            Have questions about admissions, courses, or anything else? We're here to help.
-                        </p>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start max-w-6xl mx-auto">
-                        <AnimatedContainer>
-                            <div className="space-y-8">
-                                <h3 className="text-2xl font-bold text-[--text-primary]">Contact Information</h3>
-                                <p className="text-slate-600 leading-relaxed">
-                                    Fill out the form and our team will get back to you within 24 hours. You can also reach us through the contact details below.
-                                </p>
-                                <div className="space-y-4">
-                                    <div className="flex items-center gap-4">
-                                        <div className="flex-shrink-0 h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
-                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-[--primary-medium]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                                            </svg>
-                                        </div>
-                                        <div>
-                                            <p className="font-semibold text-slate-800">Phone</p>
-                                            <a href="tel:+918081269969" className="text-slate-600 hover:text-[--primary-medium]">+91 8081269969</a>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-4">
-                                         <div className="flex-shrink-0 h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
-                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-[--primary-medium]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                            </svg>
-                                        </div>
-                                        <div>
-                                            <p className="font-semibold text-slate-800">Email</p>
-                                            <a href="mailto:Support@studycups.in" className="text-slate-600 hover:text-[--primary-medium]">Support@studycups.in</a>
-                                        </div>
-                                    </div>
-                                </div>
+
+                {/* CONTACT INFO CARD */}
+                <div className="bg-white rounded-3xl shadow-[0_20px_40px_rgba(0,0,0,0.06)] 
+                                border border-slate-100 p-4 space-y-3 md:flex-1">
+
+                    <h3 className="text-lg font-semibold text-slate-900">Contact Information</h3>
+
+                    <p className="text-sm text-slate-600 leading-relaxed">
+                        Fill out the form and our team will get back to you within 24 hours.
+                        You can also reach us through the contact details below.
+                    </p>
+
+                    <div className="space-y-4">
+
+                        {/* PHONE */}
+                        <div className="flex items-center gap-4 bg-white shadow-md px-5 py-4 
+                                        rounded-2xl border border-slate-100">
+                            <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" 
+                                    className="h-6 w-6 text-[#0F2D52]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                        d="M3 5a2 2 0 012-2h3l2 5-2 1a11 11 0 005 5l1-2 5 2v3a2 2 0 01-2 2h-1C10.82 19 5 13.18 5 6V5z" />
+                                </svg>
                             </div>
-                        </AnimatedContainer>
-                        <AnimatedContainer delay={150}>
-                            <ContactForm />
-                        </AnimatedContainer>
+                            <div>
+                                <p className="font-semibold text-slate-900 text-sm">Phone</p>
+                                <a href="tel:+918081269969"
+                                    className="text-slate-600 hover:text-[#0F2D52] text-sm">
+                                    +91 8081269969
+                                </a>
+                            </div>
+                        </div>
+
+                        {/* EMAIL */}
+                        <div className="flex items-center gap-4 bg-white shadow-md px-5 py-4 
+                                        rounded-2xl border border-slate-100">
+                            <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" 
+                                    className="h-6 w-6 text-[#0F2D52]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                        d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <p className="font-semibold text-slate-900 text-sm">Email</p>
+                                <a href="mailto:Support@studycups.in"
+                                    className="text-slate-600 hover:text-[#0F2D52] text-sm">
+                                    Support@studycups.in
+                                </a>
+                            </div>
+                        </div>
+
                     </div>
+
                 </div>
-            </section>
+            </div>
+
+            {/* RIGHT SIDE FORM */}
+            <AnimatedContainer delay={150}>
+                <ContactForm />
+            </AnimatedContainer>
+
+        </div>
+    </div>
+</section>
+
+
 
         </div>
     );

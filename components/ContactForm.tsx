@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 
 const ContactForm: React.FC = () => {
@@ -8,19 +7,53 @@ const ContactForm: React.FC = () => {
         subject: '',
         message: '',
     });
+
     const [isSubmitted, setIsSubmitted] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const handleChange = (
+        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    ) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+        setFormData((prev) => ({ ...prev, [name]: value }));
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        // In a real application, you would send this data to a server.
-        console.log('Contact Form Submitted:', formData);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+
+    try {
+        const res = await fetch("http://localhost:5000/api/contact", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(formData),
+        });
+
+        // SAFER JSON HANDLING
+        let data: any = {};
+        try {
+            data = await res.json();
+        } catch (jsonErr) {
+            console.warn("API returned no JSON response");
+        }
+
+        if (!res.ok) {
+            throw new Error(data?.message || "API request failed");
+        }
+
+        // Success
         setIsSubmitted(true);
-    };
+        setFormData({ name: "", email: "", subject: "", message: "" });
+
+    } catch (err: any) {
+        setError(err.message || "Something went wrong");
+    } finally {
+        setLoading(false);
+    }
+};
+
 
     if (isSubmitted) {
         return (
@@ -37,10 +70,14 @@ const ContactForm: React.FC = () => {
     }
 
     return (
-        <div className="bg-white p-8 rounded-2xl shadow-lg border h-full">
+        <div className="bg-white p-6 rounded-3xl shadow-[0_20px_40px_rgba(0,0,0,0.08)] border border-slate-100">
             <form onSubmit={handleSubmit} className="space-y-6">
+
+                {/* Full Name */}
                 <div>
-                    <label htmlFor="name" className="block text-sm font-semibold text-slate-700 mb-1">Full Name</label>
+                    <label htmlFor="name" className="block text-sm font-semibold text-slate-700 mb-2">
+                        Full Name
+                    </label>
                     <input
                         type="text"
                         name="name"
@@ -48,11 +85,17 @@ const ContactForm: React.FC = () => {
                         required
                         value={formData.name}
                         onChange={handleChange}
-                        className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[--primary-medium]"
+                        placeholder="Enter your full name"
+                        className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 
+                                   focus:outline-none focus:ring-2 focus:ring-[#0F2D52] transition"
                     />
                 </div>
+
+                {/* Email */}
                 <div>
-                    <label htmlFor="email" className="block text-sm font-semibold text-slate-700 mb-1">Email Address</label>
+                    <label htmlFor="email" className="block text-sm font-semibold text-slate-700 mb-2">
+                        Email Address
+                    </label>
                     <input
                         type="email"
                         name="email"
@@ -60,11 +103,17 @@ const ContactForm: React.FC = () => {
                         required
                         value={formData.email}
                         onChange={handleChange}
-                        className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[--primary-medium]"
+                        placeholder="Enter your email"
+                        className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 
+                                   focus:outline-none focus:ring-2 focus:ring-[#0F2D52] transition"
                     />
                 </div>
+
+                {/* Subject */}
                 <div>
-                    <label htmlFor="subject" className="block text-sm font-semibold text-slate-700 mb-1">Subject</label>
+                    <label htmlFor="subject" className="block text-sm font-semibold text-slate-700 mb-2">
+                        Subject
+                    </label>
                     <input
                         type="text"
                         name="subject"
@@ -72,11 +121,17 @@ const ContactForm: React.FC = () => {
                         required
                         value={formData.subject}
                         onChange={handleChange}
-                        className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[--primary-medium]"
+                        placeholder="Enter subject"
+                        className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 
+                                   focus:outline-none focus:ring-2 focus:ring-[#0F2D52] transition"
                     />
                 </div>
+
+                {/* Message */}
                 <div>
-                    <label htmlFor="message" className="block text-sm font-semibold text-slate-700 mb-1">Message</label>
+                    <label htmlFor="message" className="block text-sm font-semibold text-slate-700 mb-2">
+                        Message
+                    </label>
                     <textarea
                         name="message"
                         id="message"
@@ -84,17 +139,30 @@ const ContactForm: React.FC = () => {
                         rows={4}
                         value={formData.message}
                         onChange={handleChange}
-                        className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[--primary-medium]"
+                        placeholder="Write your message here..."
+                        className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 
+                                   focus:outline-none focus:ring-2 focus:ring-[#0F2D52] transition"
                     />
                 </div>
+
+                {/* Error Message */}
+                {error && (
+                    <p className="text-red-600 text-sm">{error}</p>
+                )}
+
+                {/* Submit Button */}
                 <div>
                     <button
                         type="submit"
-                        className="w-full px-6 py-3 font-semibold text-white bg-[--accent-green] rounded-lg shadow-md hover:bg-green-700 transition-all duration-300"
+                        disabled={loading}
+                        className={`w-full px-6 py-3 font-semibold text-white bg-[#0CC25F] 
+                                   rounded-xl shadow-lg transition-all duration-300
+                                   ${loading ? "opacity-70 cursor-not-allowed" : "hover:bg-[#0aa34f]"}`}
                     >
-                        Send Message
+                        {loading ? "Submitting..." : "Submit Query"}
                     </button>
                 </div>
+
             </form>
         </div>
     );

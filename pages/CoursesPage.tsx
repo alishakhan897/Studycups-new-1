@@ -1,194 +1,340 @@
+import React, { useState, useMemo, useEffect } from "react";
+import type { View, College } from "../types";
+import { useOnScreen } from "../hooks/useOnScreen";
 
-import React, { useState, useMemo } from 'react';
-import type { View } from '../types';
-import { POPULAR_COURSES_DATA } from '../constants';
-import { useOnScreen } from '../hooks/useOnScreen';
+/* ================= ANIMATION ================= */
 
-const AnimatedContainer: React.FC<{children: React.ReactNode, delay?: number, className?: string}> = ({ children, delay = 0, className = '' }) => {
-    const [ref, isVisible] = useOnScreen<HTMLDivElement>({ threshold: 0.1 });
-    return (
-        <div
-            ref={ref}
-            className={`opacity-0 ${isVisible ? 'animate-fadeInUp' : ''} ${className}`}
-            style={{ animationDelay: `${delay}ms` }}
-        >
-            {children}
-        </div>
-    );
+const AnimatedContainer: React.FC<{
+  children: React.ReactNode;
+  delay?: number;
+  className?: string;
+}> = ({ children, delay = 0, className = "" }) => {
+  const [ref, isVisible] = useOnScreen<HTMLDivElement>({ threshold: 0.1 });
+  return (
+    <div
+      ref={ref}
+      className={`opacity-0 ${isVisible ? "animate-fadeInUp" : ""} ${className}`}
+      style={{ animationDelay: `${delay}ms` }}
+    >
+      {children}
+    </div>
+  );
 };
 
-const icons: { [key: string]: React.ReactNode } = {
-    btech: <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>,
-    mba: <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>,
-    bba: <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>,
-    mca: <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>,
-    mbbs: <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 016-6h6a6 6 0 016 6v1h-3M15 21a2 2 0 002-2v-1a2 2 0 00-2-2h-3a2 2 0 00-2 2v1a2 2 0 002 2z" /></svg>,
-    llb: <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2h10a2 2 0 002-2v-1a2 2 0 012-2h1.945M7.707 4.293l4.243 4.243-4.243 4.243M16.293 4.293l-4.243 4.243 4.243 4.243" /></svg>,
-    bcom: <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 8h6m-5 4h4m5 6H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2z" /></svg>,
-    bdes: <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-};
+/* ================= HASH ================= */
 
-const courseColors: { [key: string]: string } = {
-    btech: 'bg-[--primary-medium]',
-    mba: 'bg-[--primary-dark]',
-    bba: 'bg-orange-500',
-    mca: 'bg-[--primary-dark]',
-    mbbs: 'bg-green-600',
-    llb: 'bg-yellow-600',
-    bcom: 'bg-red-600',
-    bdes: 'bg-pink-600',
+const hashIndex = (str: string) => {
+  let h = 0;
+  for (let i = 0; i < str.length; i++) {
+    h = (h << 5) - h + str.charCodeAt(i);
+    h |= 0;
+  }
+  return Math.abs(h);
 };
 
 interface CoursesPageProps {
-    setView: (view: View) => void;
+  setView: (view: View) => void;
+  colleges: College[];
+  initialStream?: string;
 }
 
-const CoursesPage: React.FC<CoursesPageProps> = ({ setView }) => {
-    const [searchTerm, setSearchTerm] = useState('');
-    const [selectedStream, setSelectedStream] = useState('All');
-    const [selectedLevel, setSelectedLevel] = useState('All');
+const CoursesPage: React.FC<CoursesPageProps> = ({
+  setView,
+  colleges,
+  initialStream,
+}) => {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedStream, setSelectedStream] = useState("All");
+  const [selectedLevel, setSelectedLevel] = useState("All");
 
-    const streams = useMemo(() => ['All', ...Array.from(new Set(POPULAR_COURSES_DATA.map(c => c.stream)))], []);
-    const levels = useMemo(() => ['All', ...Array.from(new Set(POPULAR_COURSES_DATA.map(c => c.level)))], []);
+  useEffect(() => {
+    if (initialStream) setSelectedStream(initialStream.trim());
+  }, [initialStream]);
 
-    const filteredCourses = useMemo(() => {
-        const lowercasedFilter = searchTerm.toLowerCase();
+  /* ================= ALL COURSES ================= */
 
-        return POPULAR_COURSES_DATA.filter(course => {
-            const searchMatch = !searchTerm.trim() ||
-                course.name.toLowerCase().includes(lowercasedFilter) ||
-                course.fullName.toLowerCase().includes(lowercasedFilter) ||
-                course.description.toLowerCase().includes(lowercasedFilter);
+  const allCourses = useMemo(() => {
+    const arr: any[] = [];
 
-            const streamMatch = selectedStream === 'All' || course.stream === selectedStream;
-            const levelMatch = selectedLevel === 'All' || course.level === selectedLevel;
+    colleges.forEach((col) => {
+      if (!col.courses) return;
 
-            return searchMatch && streamMatch && levelMatch;
+      col.courses.forEach((cr) => {
+        arr.push({
+          ...cr,
+          collegeId: col.id,
+          collegeName: col.name,
+          stream: col.stream.trim(),
+          level: cr.level || "General",
+          courseKey: cr.name.split(" ")[0].replace(".", ""),
+          fullName: cr.fullName || cr.name,
+          description: cr.about || "Course description coming soon",
         });
-    }, [searchTerm, selectedStream, selectedLevel]);
-    
-    const handleClearFilters = () => {
-        setSelectedStream('All');
-        setSelectedLevel('All');
-    }
+      });
+    });
 
-    return (
-        <div>
-            {/* Hero */}
-            <div className="relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-r from-[--primary-dark] via-[--primary-medium] to-[--primary-medium]" />
-                <div className="relative container mx-auto px-4 sm:px-6 lg:px-8 py-14 text-white text-center">
-                    <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight drop-shadow-sm">Explore Top Courses</h1>
-                    <p className="mt-4 text-lg text-white/80 max-w-2xl mx-auto drop-shadow-sm">
-                        Find the perfect program to kickstart your career. Search for a course below.
-                    </p>
-                    <div className="mt-8 max-w-2xl mx-auto relative">
-                        <span className="absolute inset-y-0 left-0 flex items-center pl-4">
-                            <svg className="w-5 h-5 text-white/70" viewBox="0 0 24 24" fill="none">
-                                <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"></path>
-                            </svg>
-                        </span>
-                        <input
-                            type="text"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            placeholder="Search for B.Tech, MBA, Design..."
-                            className="w-full pl-12 pr-4 py-4 rounded-full text-lg text-slate-900 bg-white/95 backdrop-blur-sm shadow-lg focus:outline-none focus:ring-2 focus:ring-[--primary-medium]/40 border border-white/30"
-                        />
-                    </div>
-                </div>
-            </div>
-            <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    return arr;
+  }, [colleges]);
 
-            {/* Filters Section */}
-            <div className="mb-12 space-y-6 bg-white p-6 rounded-2xl border shadow-sm">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-                    <div>
-                        <h3 className="font-bold text-lg text-slate-700 mb-3 text-center md:text-left">Filter by Stream</h3>
-                        <div className="flex flex-wrap justify-center md:justify-start gap-2">
-                            {streams.map(stream => (
-                                <button
-                                    key={stream}
-                                    onClick={() => setSelectedStream(stream)}
-                                    className={`px-3.5 py-1.5 font-semibold rounded-full text-sm transition-all duration-300 border ${
-                                        selectedStream === stream
-                                            ? 'bg-[--primary-medium] text-white border-[--primary-medium] shadow'
-                                            : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
-                                    }`}
-                                >
-                                    {stream}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                     <div>
-                        <h3 className="font-bold text-lg text-slate-700 mb-3 text-center md:text-left">Filter by Level</h3>
-                        <div className="flex flex-wrap justify-center md:justify-start gap-2">
-                            {levels.map(level => (
-                                <button
-                                    key={level}
-                                    onClick={() => setSelectedLevel(level)}
-                                    className={`px-3.5 py-1.5 font-semibold rounded-full text-sm transition-all duration-300 border ${
-                                        selectedLevel === level
-                                            ? 'bg-[--primary-medium] text-white border-[--primary-medium] shadow'
-                                            : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
-                                    }`}
-                                >
-                                    {level}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-                
-                {(selectedStream !== 'All' || selectedLevel !== 'All') && (
-                    <div className="text-center border-t pt-4">
-                        <button 
-                            onClick={handleClearFilters}
-                            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-slate-600 font-semibold hover:text-red-600 hover:bg-red-50 transition-colors"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                            Clear Filters
-                        </button>
-                    </div>
-                )}
+  /* ================= GROUP ================= */
+
+  const groupedCourses = useMemo(() => {
+    const map = new Map();
+
+    allCourses.forEach((c) => {
+      if (!map.has(c.courseKey)) {
+        map.set(c.courseKey, { ...c, courseIds: [c.id] });
+      } else {
+        map.get(c.courseKey).courseIds.push(c.id);
+      }
+    });
+
+    return Array.from(map.values());
+  }, [allCourses]);
+
+  const streams = useMemo(() => {
+    const set = new Set<string>();
+    allCourses.forEach((c) => set.add(c.stream));
+    return ["All", ...Array.from(set)];
+  }, [allCourses]);
+
+  const levels = useMemo(() => {
+    const set = new Set<string>();
+    allCourses.forEach((c) => set.add(c.level));
+    return ["All", ...Array.from(set)];
+  }, [allCourses]);
+
+  const filteredCourses = useMemo(() => {
+    const lower = searchTerm.toLowerCase();
+
+    return groupedCourses.filter((c) => {
+      const searchMatch =
+        c.name?.toLowerCase().includes(lower) ||
+        c.fullName?.toLowerCase().includes(lower);
+
+      const streamMatch =
+        selectedStream === "All" || c.stream === selectedStream;
+
+      const levelMatch =
+        selectedLevel === "All" || c.level === selectedLevel;
+
+      return searchMatch && streamMatch && levelMatch;
+    });
+  }, [groupedCourses, searchTerm, selectedStream, selectedLevel]);
+
+  const clearFilters = () => {
+    setSelectedStream("All");
+    setSelectedLevel("All");
+  };
+
+  return (
+    <div className="bg-[#f5f7fb] min-h-screen">
+
+{/* HERO */}
+<section className="relative overflow-hidden mt-6">
+  {/* Background */}
+  <div className="absolute inset-0 bg-gradient-to-br from-[#0f2a44] via-[#163b63] to-[#1e4e79]" />
+
+  {/* Decorative blur (smaller) */}
+  <div className="absolute -top-32 -left-32 h-64 w-64 bg-blue-500/20 rounded-full blur-3xl" />
+  <div className="absolute top-32 -right-32 h-72 w-72 bg-indigo-500/20 rounded-full blur-3xl" />
+
+  {/* CONTENT */}
+  <div className="relative container mx-auto px-6 py-14 md:py-16 text-center text-white">
+
+    {/* Title */}
+    <h1 className="text-3xl md:text-4xl font-extrabold leading-tight">
+      Explore Career-Focused Courses
+    </h1>
+
+    {/* Subtitle */}
+    <p className="mt-3 text-base md:text-lg text-white/80 max-w-2xl mx-auto">
+      Discover the best courses across top colleges and universities in India.
+      Compare duration, level and career outcomes.
+    </p>
+
+    {/* Search */}
+    <div className="mt-7 max-w-xl mx-auto relative">
+      <span className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-500 text-lg">
+        🔍
+      </span>
+      <input
+        type="text"
+        value={searchTerm}
+        onChange={e => setSearchTerm(e.target.value)}
+        placeholder="Search B.Tech, MBA, MBBS, Design..."
+        className="w-full pl-12 pr-4 py-3 rounded-full text-slate-900 text-base
+                   shadow-lg focus:ring-2 focus:ring-blue-300 outline-none"
+      />
+    </div>
+
+    {/* STATS (compact) */}
+    <div className="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto">
+      <div className="bg-white/10 backdrop-blur rounded-xl p-4">
+        <p className="text-2xl font-extrabold">500+</p>
+        <p className="text-xs text-white/80">Courses Available</p>
+      </div>
+
+      <div className="bg-white/10 backdrop-blur rounded-xl p-4">
+        <p className="text-2xl font-extrabold">50+</p>
+        <p className="text-xs text-white/80">Career Streams</p>
+      </div>
+
+      <div className="bg-white/10 backdrop-blur rounded-xl p-4">
+        <p className="text-2xl font-extrabold">100K+</p>
+        <p className="text-xs text-white/80">Students Guided</p>
+      </div>
+    </div>
+
+    {/* Trust Line */}
+    <p className="mt-6 text-xs text-white/70">
+      Trusted by students across India • Verified course data • Career-oriented guidance
+    </p>
+
+  </div>
+</section>
+
+
+
+      <div className="container mx-auto px-6 py-12">
+        {/* FILTERS */}
+        <div className="bg-white rounded-2xl border shadow-sm p-6 mb-12 space-y-6">
+          <div className="grid md:grid-cols-2 gap-6">
+            <div>
+              <h3 className="font-semibold mb-3">Filter by Stream</h3>
+              <div className="flex flex-wrap gap-2">
+                {streams.map((stream) => (
+                  <button
+                    key={stream}
+                    onClick={() => setSelectedStream(stream)}
+                    className={`px-4 py-2 rounded-full text-sm font-semibold border ${
+                      selectedStream === stream
+                        ? "bg-[--primary-medium] text-white border-[--primary-medium]"
+                        : "bg-white border-slate-300"
+                    }`}
+                  >
+                    {stream}
+                  </button>
+                ))}
+              </div>
             </div>
-            
-            {filteredCourses.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-                    {filteredCourses.map((course, index) => (
-                        <AnimatedContainer key={course.name} delay={index * 80}>
-                            <div
-                                onClick={() => setView({ page: 'course-detail', courseName: course.courseLinkName })}
-                                className={`p-6 rounded-2xl text-white flex flex-col h-full cursor-pointer group transform hover:-translate-y-2 transition-all duration-300 ${courseColors[course.icon]} shadow-md hover:shadow-lg ring-1 ring-white/20 hover:ring-white/40`}
-                            >
-                                <div className="flex justify-between items-start">
-                                    <h2 className="text-4xl font-extrabold">{course.name}</h2>
-                                    <div className="p-3 bg-white/20 rounded-full ring-1 ring-white/30 group-hover:ring-white/50">
-                                        {icons[course.icon]}
-                                    </div>
-                                </div>
-                                <p className="text-lg font-semibold mt-1 opacity-90">{course.fullName}</p>
-                                <div className="border-t border-white/30 my-4"></div>
-                                <p className="text-white/80 text-base flex-grow">{course.description}</p>
-                                <div className="mt-6 text-center">
-                                    <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-white/10 hover:bg-white/20 font-semibold text-white text-lg">
-                                        View Details &rarr;
-                                    </span>
-                                </div>
-                            </div>
-                        </AnimatedContainer>
-                    ))}
-                </div>
-            ) : (
-                 <div className="text-center py-20 bg-white rounded-lg shadow-sm border">
-                    <h3 className="text-2xl font-semibold text-slate-700">No Courses Found</h3>
-                    <p className="text-slate-500 mt-2">Try adjusting your filters or search term.</p>
-                </div>
-            )}
+
+            <div>
+              <h3 className="font-semibold mb-3">Filter by Level</h3>
+              <div className="flex flex-wrap gap-2">
+                {levels.map((level) => (
+                  <button
+                    key={level}
+                    onClick={() => setSelectedLevel(level)}
+                    className={`px-4 py-2 rounded-full text-sm font-semibold border ${
+                      selectedLevel === level
+                        ? "bg-[--primary-medium] text-white border-[--primary-medium]"
+                        : "bg-white border-slate-300"
+                    }`}
+                  >
+                    {level}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {(selectedStream !== "All" || selectedLevel !== "All") && (
+            <div className="text-center">
+              <button
+                onClick={clearFilters}
+                className="text-red-600 font-semibold"
+              >
+                Clear Filters
+              </button>
+            </div>
+          )}
         </div>
+
+        {/* COURSES GRID */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+          {filteredCourses.map((course, index) => (
+            <AnimatedContainer key={course.courseKey} delay={index * 80}>
+           <div
+  onClick={() =>
+    setView({
+      page: "course-detail",
+      courseIds: course.courseIds,
+      courseKey: course.courseKey,
+    })
+  }
+  className="
+    bg-white rounded-2xl border
+    shadow-[0_8px_24px_rgba(0,0,0,0.08)]
+    hover:shadow-[0_12px_32px_rgba(0,0,0,0.12)]
+    transition-all duration-300
+    p-6 cursor-pointer flex flex-col h-full
+  "
+>
+  {/* TAGS */}
+  <div className="flex justify-between mb-4">
+    <span className="px-3 py-1 text-xs bg-slate-100 rounded-full font-semibold">
+      Full Time
+    </span>
+    <span className="px-3 py-1 text-xs bg-slate-100 rounded-full font-semibold">
+      {course.duration || "N/A"}
+    </span>
+  </div>
+
+  {/* COURSE NAME */}
+  <h3 className="text-lg font-bold text-slate-900 mb-4">
+    {course.fullName}
+  </h3>
+
+  {/* STATS GRID */}
+  <div className="grid grid-cols-2 gap-3 text-sm mb-6">
+    <div className="border rounded-lg p-3">
+      <p className="text-xs text-slate-500">Duration</p>
+      <p className="font-semibold">
+        {course.duration || "N/A"}
+      </p>
+    </div>
+
+    <div className="border rounded-lg p-3">
+      <p className="text-xs text-slate-500">Avg. Fees</p>
+      <p className="font-semibold">
+        ₹{course.fees?.toLocaleString("en-IN") || "—"}
+      </p>
+    </div>
+
+    <div className="border rounded-lg p-3">
+      <p className="text-xs text-slate-500">Colleges</p>
+     <p className="font-semibold">
+  {course.courseIds?.length || 0}
+</p>
+
+    </div>
+
+    <div className="border rounded-lg p-3">
+      <p className="text-xs text-slate-500">Level</p>
+      <p className="font-semibold">
+        {course.level}
+      </p>
+    </div>
+  </div>
+
+  {/* FOOTER */}
+  <div className="mt-auto flex justify-between items-center">
+    <span className="text-[12px] font-semibold text-blue-700">
+      Course Overview →
+    </span>
+    <span className="px-4 py-2 bg-green-500 text-white text-xs rounded-full font-semibold">
+      View Details
+    </span>
+  </div>
+</div>
+
+            </AnimatedContainer>
+          ))}
         </div>
-    );
+      </div>
+    </div>
+  );
 };
 
 export default CoursesPage;

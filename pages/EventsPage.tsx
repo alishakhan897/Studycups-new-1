@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import type { View, Event } from '../types';
 import { EVENTS_DATA } from '../constants';
 import { useOnScreen } from '../hooks/useOnScreen';
@@ -8,8 +8,9 @@ interface EventsPageProps {
     setView: (view: View) => void;
 }
 
-const AnimatedContainer: React.FC<{children: React.ReactNode, delay?: number, className?: string}> = ({ children, delay = 0, className = '' }) => {
+const AnimatedContainer: React.FC<{ children: React.ReactNode, delay?: number, className?: string }> = ({ children, delay = 0, className = '' }) => {
     const [ref, isVisible] = useOnScreen<HTMLDivElement>({ threshold: 0.1 });
+
     return (
         <div
             ref={ref}
@@ -59,22 +60,22 @@ const EventCard: React.FC<{ event: Event }> = ({ event }) => {
     return (
         <div className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 overflow-hidden group border flex flex-col md:flex-row">
             <div className="md:w-2/5 relative">
-                <img src={event.imageUrl} alt={event.title} className="w-full h-56 md:h-full object-cover"/>
+                <img src={event.imageUrl} alt={event.title} className="w-full h-56 md:h-full object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent p-4 flex flex-col justify-end">
                     <CountdownTimer targetDate={event.date} />
                 </div>
             </div>
             <div className="md:w-3/5 p-6 flex flex-col">
-                 <div>
+                <div>
                     <span className={`text-xs font-bold px-3 py-1 rounded-full ${categoryColors[event.category]}`}>{event.category}</span>
                 </div>
                 <h3 className="text-2xl font-bold text-slate-800 leading-tight mt-3">{event.title}</h3>
                 <p className="text-sm font-semibold text-slate-500 mt-1">{formattedDate}</p>
                 <p className="text-slate-600 mt-4 text-base flex-grow">{event.description}</p>
-                 <div className="mt-6">
-                     <a 
-                        href={event.link} 
-                        target="_blank" 
+                <div className="mt-6">
+                    <a
+                        href={event.link}
+                        target="_blank"
                         rel="noopener noreferrer"
                         className="inline-block px-6 py-3 font-semibold text-white bg-[--accent-green] rounded-lg shadow-md hover:bg-green-700 transition-all duration-300"
                     >
@@ -88,6 +89,23 @@ const EventCard: React.FC<{ event: Event }> = ({ event }) => {
 
 
 const EventsPage: React.FC<EventsPageProps> = ({ setView }) => {
+    const [events, setEvents] = useState<Event[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchEvents = async () => {
+            try {
+                const res = await fetch("http://localhost:5000/api/events");
+                const json = await res.json();
+                if (json.success) setEvents(json.data);
+                setLoading(false);
+            } catch (err) {
+                console.error("Events API Error:", err);
+                setLoading(false);
+            }
+        };
+        fetchEvents();
+    }, []);
     return (
         <div className="bg-slate-50">
             {/* Hero Section */}
@@ -102,9 +120,11 @@ const EventsPage: React.FC<EventsPageProps> = ({ setView }) => {
 
             {/* Events Grid */}
             <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16">
-                 {EVENTS_DATA.length > 0 ? (
+                {loading ? (
+                    <p className="text-center py-20 text-lg">Loading events...</p>
+                ) : events.length > 0 ? (
                     <div className="space-y-12">
-                        {EVENTS_DATA.map((event, index) => (
+                        {events.map((event, index) => (
                             <AnimatedContainer key={event.id} delay={index * 100}>
                                 <EventCard event={event} />
                             </AnimatedContainer>
@@ -112,11 +132,8 @@ const EventsPage: React.FC<EventsPageProps> = ({ setView }) => {
                     </div>
                 ) : (
                     <div className="text-center py-20 bg-white rounded-lg shadow-sm border">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-16 w-16 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                        <h3 className="text-2xl font-semibold text-slate-700 mt-4">No Upcoming Events</h3>
-                        <p className="text-slate-500 mt-2">Please check back later for new events and workshops.</p>
+                        <h3 className="text-2xl font-semibold text-slate-700">No Upcoming Events</h3>
+                        <p className="text-slate-500 mt-2">Please check back later.</p>
                     </div>
                 )}
             </div>
