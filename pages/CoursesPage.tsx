@@ -49,7 +49,93 @@ const CoursesPage: React.FC<CoursesPageProps> = ({
 
   useEffect(() => {
     if (initialStream) setSelectedStream(initialStream.trim());
-  }, [initialStream]);
+  }, [initialStream]); 
+
+
+  const deriveStream = (courseName: string) => {
+  const name = courseName.toLowerCase();
+
+  /* ---------- DOCTORAL ---------- */
+  if (
+    name.includes("ph.d") ||
+    name.includes("phd") ||
+    name.includes("post doctoral") ||
+    name.includes("doctoral")
+  ) {
+    return "Doctoral";
+  }
+
+  /* ---------- MANAGEMENT ---------- */
+  if (
+    name.includes("mba") ||
+    name.includes("pgdm") ||
+    name.includes("management") ||
+    name.includes("leadership") ||
+    name.includes("strategy") ||
+    name.includes("executive")
+  ) {
+    return "Management";
+  }
+
+  /* ---------- ENGINEERING / TECH ---------- */
+  if (
+    name.includes("b.tech") ||
+    name.includes("btech") ||
+    name.includes("engineering") ||
+    name.includes("technology") ||
+    name.includes("data science") ||
+    name.includes("artificial intelligence") ||
+    name.includes("machine learning") ||
+    name.includes("computer") ||
+    name.includes("m.sc") ||
+    name.includes("msc")
+  ) {
+    return "Engineering";
+  }
+
+  /* ---------- MEDICAL ---------- */
+  if (
+    name.includes("mbbs") ||
+    name.includes("medical") ||
+    name.includes("healthcare")
+  ) {
+    return "Medical";
+  }
+
+  /* ---------- COMMERCE ---------- */
+  if (
+    name.includes("b.com") ||
+    name.includes("commerce") ||
+    name.includes("account") ||
+    name.includes("finance")
+  ) {
+    return "Commerce";
+  }
+
+  /* ---------- ARTS / SOCIAL ---------- */
+  if (
+    name.includes("arts") ||
+    name.includes("humanities") ||
+    name.includes("social")
+  ) {
+    return "Arts";
+  }
+
+  return "General";
+};
+
+function formatToLakhs(num) {
+  if (!num) return "N/A";
+
+  let lakhs = num / 100000;
+
+  // keep 2 decimals max (20.75)
+  lakhs = Math.round(lakhs * 100) / 100;
+
+  return "₹" + lakhs + " L";
+}
+
+
 
   /* ================= ALL COURSES ================= */
 
@@ -57,20 +143,34 @@ const CoursesPage: React.FC<CoursesPageProps> = ({
     const arr: any[] = [];
 
     colleges.forEach((col) => {
-      if (!col.courses) return;
+     if (!Array.isArray(col.rawScraped?.courses)) return;
 
-      col.courses.forEach((cr) => {
-        arr.push({
-          ...cr,
-          collegeId: col.id,
-          collegeName: col.name,
-          stream: col.stream.trim(),
-          level: cr.level || "General",
-          courseKey: cr.name.split(" ")[0].replace(".", ""),
-          fullName: cr.fullName || cr.name,
-          description: cr.about || "Course description coming soon",
-        });
-      });
+col.rawScraped.courses.forEach((cr) => {
+
+  // ignore subcourses (we only want parent course)
+  if (Array.isArray(cr.sub_courses) && cr.sub_courses.length > 0) return;
+
+ arr.push({
+  id: cr.id,                         // ✅ REAL COURSE ID
+  courseIds: [cr.id],                // ✅ ADD THIS
+  name: cr.name,
+  fullName: cr.name,
+
+  collegeId: col.id,
+  collegeName: col.name,
+
+  stream: deriveStream(cr.name),
+
+  level: cr.mode || "Full Time",
+  duration: cr.duration || null,
+  fees: cr.fees || "N/A",
+
+  courseKey: cr.name.trim().toLowerCase(),
+});
+
+
+});
+
     });
 
     return arr;
@@ -78,19 +178,32 @@ const CoursesPage: React.FC<CoursesPageProps> = ({
 
   /* ================= GROUP ================= */
 
-  const groupedCourses = useMemo(() => {
-    const map = new Map();
+ const groupedCourses = useMemo(() => {
+  const map = new Map();
 
-    allCourses.forEach((c) => {
-      if (!map.has(c.courseKey)) {
-        map.set(c.courseKey, { ...c, courseIds: [c.id] });
-      } else {
-        map.get(c.courseKey).courseIds.push(c.id);
-      }
-    });
+  allCourses.forEach((c) => {
+    if (!map.has(c.courseKey)) {
+     map.set(c.courseKey, {
+  ...c,
+  courseIds: [...c.courseIds],   // ✅ FROM allCourses
+  colleges: [c.collegeId],
+});
 
-    return Array.from(map.values());
-  }, [allCourses]);
+
+    } else {
+      const entry = map.get(c.courseKey);
+
+     if (!entry.colleges.includes(c.collegeId)) {
+  entry.colleges.push(c.collegeId);
+  entry.courseIds.push(...c.courseIds);  // ✅ REAL IDs
+}
+
+    }
+  });
+
+  return Array.from(map.values());
+}, [allCourses]);
+
 
   const streams = useMemo(() => {
     const set = new Set<string>();
@@ -282,7 +395,15 @@ const CoursesPage: React.FC<CoursesPageProps> = ({
   </div>
 
   {/* COURSE NAME */}
-  <h3 className="text-lg font-bold text-slate-900 mb-4">
+  <h3 className="
+    text-[14px]
+    mb-3
+    leading-tight
+    truncate
+    whitespace-nowrap
+    overflow-hidden
+    max-w-full
+  ">
     {course.fullName}
   </h3>
 
@@ -298,14 +419,18 @@ const CoursesPage: React.FC<CoursesPageProps> = ({
     <div className="border rounded-lg p-3">
       <p className="text-xs text-slate-500">Avg. Fees</p>
       <p className="font-semibold">
-        ₹{course.fees?.toLocaleString("en-IN") || "—"}
+    {course.fees}
+
+
+
       </p>
     </div>
 
     <div className="border rounded-lg p-3">
       <p className="text-xs text-slate-500">Colleges</p>
      <p className="font-semibold">
-  {course.courseIds?.length || 0}
+ {course.colleges?.length || 0}
+
 </p>
 
     </div>

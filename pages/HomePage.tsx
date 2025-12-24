@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import type { View, College } from "../types";
 import { PARTNER_LOGOS } from "../logos";
-import CollegeCard from "../components/CollegeCard";
+import CollegeCard from "../components/CollegeCard"; 
 
 
 import {
@@ -11,7 +11,35 @@ import {
     COURSE_STREAMS,
 } from "../constants";
 import { useOnScreen } from "../hooks/useOnScreen";
-import ContactForm from "../components/ContactForm";
+import ContactForm from "../components/ContactForm"; 
+
+
+const useScroll = () => {
+    const [scrollY, setScrollY] = useState(0);
+
+    useEffect(() => {
+        const onScroll = () => setScrollY(window.scrollY);
+        window.addEventListener("scroll", onScroll);
+        return () => window.removeEventListener("scroll", onScroll);
+    }, []);
+
+    return scrollY;
+};
+
+const FadeSection = ({ children, delay = 0 }) => {
+    const [ref, visible] = useOnScreen<HTMLDivElement>({ threshold: 0.25 });
+    return (
+        <div
+            ref={ref}
+            style={{ animationDelay: `${delay}ms` }}
+            className={`opacity-0 translate-y-10 transition-all duration-[1200ms]
+                ${visible ? "opacity-100 translate-y-0" : ""}
+            `}
+        >
+            {children}
+        </div>
+    );
+};
 
 
 interface HomePageProps {
@@ -37,7 +65,10 @@ const AnimatedContainer: React.FC<{
             {children}
         </div>
     );
-};
+}; 
+
+
+
 
 const StreamTag: React.FC<{ stream: string }> = ({ stream }) => {
     const colors: { [key: string]: string } = {
@@ -74,7 +105,7 @@ const HomePage: React.FC<HomePageProps> = ({
 
     const [query, setQuery] = useState("");
 const [activeCity, setActiveCity] = useState("");
-const [error, setError] = useState("");  // for "No city found"
+const [error, setError] = useState(""); 
 // STREAM FILTER FOR EXPLORE COURSES
 const [exploreLevel, setExploreLevel] = useState("All");
 // UNIQUE STREAMS FROM COURSES
@@ -82,17 +113,23 @@ const [applyModalOpen, setApplyModalOpen] = useState(false);
 const [modalMode, setModalMode] = useState<"apply" | "brochure">("apply");
 
 
+const scrollY = useScroll();
+
+const heroTranslate = Math.min(scrollY * 0.5, 160); // image moves upward  
+const heroOpacity = Math.max(1 - scrollY / 400, 0);
 
 
+const extractCityState = (location?: string) => {
+  if (!location || typeof location !== "string") return null;
 
-const availableCities = [
-  "Delhi NCR", "Bangalore", "Hyderabad", "Pune",
-  "Mumbai", "Chennai", "Kolkata", "Kanpur"
-];
+  const parts = location.split(",").map(p => p.trim());
 
-const cityRefs = Object.fromEntries(
-  availableCities.map(city => [city, useRef(null)])
-);
+  return {
+    city: parts[0],
+    state: parts[1] || null,
+  };
+};
+
 
 
     const streamFilters = [
@@ -113,19 +150,46 @@ const cityRefs = Object.fromEntries(
 
 
     const animatedCollegeWords = useMemo(
-        () => ["Universities", "Colleges"],
+        () => ["Ranking", "Placements", "Reviews"]
+,
         []
-    );
+    ); 
+
+      const cityStateList = useMemo(() => {
+  const map = new Map<string, { city: string; state: string | null }>();
+
+  colleges.forEach(college => {
+    const parsed = extractCityState(college.location);
+    if (!parsed) return;
+
+    const key = parsed.city.toLowerCase();
+    if (!map.has(key)) {
+      map.set(key, parsed);
+    }
+  });
+
+  return Array.from(map.values());
+}, [colleges]);
+
     const [animatedCollegeWordIndex, setAnimatedCollegeWordIndex] = useState(0);
 
-    const words = ["Universities", "Colleges"];
+    const words = ["Ranking", "Placements", "Reviews"];
     const [currentWord, setCurrentWord] = useState("");
     const [wordIndex, setWordIndex] = useState(0);
     const [charIndex, setCharIndex] = useState(0);
     const [isDeleting, setIsDeleting] = useState(false);
     const [selectedtopcollge, setSelectedtopcollge] = useState("");
    const [selectedExamFilter, setSelectedExamFilter] = useState("All");
+   const [filteredCities, setFilteredCities] = useState(cityStateList);
 
+ 
+const cityRefs = useMemo(() => {
+  const refs: Record<string, React.RefObject<HTMLDivElement>> = {};
+  cityStateList.forEach(c => {
+    refs[c.city] = React.createRef();
+  });
+  return refs;
+}, [cityStateList]);
 
     
 
@@ -134,31 +198,50 @@ const cityRefs = Object.fromEntries(
     console.log("coursesFromColleges:", coursesFromColleges);
 
 
-  const extractCourses = (colleges) => {
-  const arr = [];
+const extractCourses = (colleges) => {
+  const map = new Map();
 
   colleges.forEach(col => {
-    if (!col.courses) return;
+    const courseArray = col.rawScraped?.courses;
+    if (!Array.isArray(courseArray)) return;
 
-    col.courses.forEach(c => {
-      arr.push({
-        ...c,
-        collegeId: col.id,
-        collegeName: col.name,
-        stream: col.stream,
-        courseKey: c.name?.split(" ")[0] || c.name,
-      });
+    courseArray.forEach(c => {
+      const key = c.name.trim().toLowerCase();
+
+      if (!map.has(key)) {
+        map.set(key, {
+          id: key,
+          name: c.name,
+          level: c.mode || "Full Time",
+          duration: c.duration || "NA",
+          fees: c.fees ?? "N/A",
+          courseKey: key,
+
+          // 🔑 MOST IMPORTANT
+          colleges: [col.id],
+          courseIds: [c.id],
+        });
+      } else {
+        const entry = map.get(key);
+
+        if (!entry.colleges.includes(col.id)) {
+          entry.colleges.push(col.id);
+          entry.courseIds.push(c.id);
+        }
+      }
     });
   });
 
-  return arr;
+  return Array.from(map.values());
 };
+
+
 
 const courses = extractCourses(colleges);
    useEffect(() => {
         let typingSpeed = 120;
 
-        if (isDeleting) typingSpeed = 60;
+        if (isDeleting) typingSpeed = 20;
 
         const handleTyping = () => {
             const fullWord = words[wordIndex];
@@ -185,6 +268,25 @@ const courses = extractCourses(colleges);
 
         return () => clearTimeout(timeout);
     }, [charIndex, isDeleting]);
+    
+    const CITY_ICONS = [
+  "/icons/gate-of-india.png",
+  "/icons/bangalore.png",
+  "/icons/red-fort_3806647.png",
+  "/icons/arch_2189457.png",
+  "/icons/temple_6482997.png",
+  "/icons/temple_510019.png",
+  "/icons/university.png",
+  "/icons/lighthouse_8162871.png",
+];
+
+const getCityIcon = (city: string) => {
+  const index =
+    Math.abs(city.split("").reduce((a, c) => a + c.charCodeAt(0), 0)) %
+    CITY_ICONS.length;
+
+  return CITY_ICONS[index];
+};
 
 
     useEffect(() => {
@@ -206,51 +308,104 @@ const courses = extractCourses(colleges);
         setView({ page: "listing", filters: heroFilters });
     };
 
-    const handleCitySearch = () => {
-  const normalized = query.trim().toLowerCase();
+   const normalize = (str: string) =>
+  str.toLowerCase().replace(/\s+/g, "").replace(/\./g, "");
 
-  const foundCity = availableCities.find(
-    (city) => city.toLowerCase() === normalized
+const handleCitySearch = () => {
+  const value = normalize(query.trim());
+
+  if (!value) {
+    setActiveCity("");
+    setFilteredCities(cityStateList);
+    setError("");
+    return;
+  }
+
+  // 1️⃣ CITY MATCH
+  const cityMatch = cityStateList.find(
+    c => normalize(c.city) === value
   );
 
- if (normalized === "") {
-  // EMPTY INPUT → NO ERROR
-  setError("");
-  setActiveCity("");
-  return;
-}
+  if (cityMatch) {
+    setActiveCity(cityMatch.city);
+    setFilteredCities(cityStateList);
+    setError("");
 
-if (!foundCity) {
-  setActiveCity("");
-  setError("No city found");
-  return;
-}
-
-  setError("");  
-  setActiveCity(foundCity);
-
-  const ref = cityRefs[foundCity];
-  if (ref?.current) {
-    ref.current.scrollIntoView({
+    const ref = cityRefs[cityMatch.city];
+    ref?.current?.scrollIntoView({
       behavior: "smooth",
       inline: "center",
-      block: "nearest"
+      block: "nearest",
     });
+    return;
   }
+
+  // 2️⃣ STATE MATCH (🔥 FIXED)
+  const stateCities = cityStateList.filter(
+    c => c.state && normalize(c.state) === value
+  );
+
+  if (stateCities.length > 0) {
+    setFilteredCities(stateCities);
+    setActiveCity("");
+    setError("");
+    return;
+  }
+
+  // ❌ NO MATCH
+  setError("No city found");
 };
 
 
-    const streams = useMemo(
-        () => ["All Streams", ...Object.keys(COURSE_STREAMS)],
-        []
-    );
+  const dynamicStreams = useMemo(() => {
+  const set = new Set<string>();
 
-    const filteredColleges = useMemo(() => {
-        if (selectedStream === "All Streams") {
-            return colleges.slice(0, 8);
+  colleges.forEach((college) => {
+    const stream = college.rawScraped?.stream;
+
+    if (Array.isArray(stream)) {
+      stream.forEach(s => {
+        if (s && typeof s === "string") {
+          set.add(s.trim());
         }
-        return colleges.filter((college) => college.stream === selectedStream);
-    }, [colleges, selectedStream]);
+      });
+    } else if (typeof stream === "string") {
+      set.add(stream.trim());
+    }
+  });
+
+  return Array.from(set).sort();
+}, [colleges]);
+
+
+
+   const streams = useMemo(
+  () => ["All Streams", ...dynamicStreams],
+  [dynamicStreams]
+);
+
+
+  const filteredColleges = useMemo(() => {
+  if (selectedStream === "All Streams") {
+    return colleges.slice(0, 8);
+  }
+
+  return colleges.filter(college => {
+    const stream = college.rawScraped?.stream;
+
+    if (Array.isArray(stream)) {
+      return stream.includes(selectedStream);
+    }
+
+    if (typeof stream === "string") {
+      return stream === selectedStream;
+    }
+
+    return false;
+  });
+}, [colleges, selectedStream]);
+
+
 
 
 
@@ -634,17 +789,22 @@ const exploreLevels = useMemo(() => {
 
 
 
-     <section className="
-  relative w-full h-[500px] overflow-hidden bg-[#0A2A6C]
-  max-md:h-[600px]
-">
+   <section
+  className="
+    relative w-full h-[550px] max-md:h-[400px] overflow-hidden flex items-center justify-center
+  "
+  style={{
+    transform: `translateY(${heroTranslate}px)`,
+    transition: "transform 0.05s linear",
+  }}
+>
 
-  {/* BACKGROUND SLIDER */}
+  {/* BACKGROUND SLIDER (UNCHANGED) */}
   <div
     className="absolute inset-0 flex"
     style={{
       width: "200%",
-      animation: "scrollX 25s linear infinite"
+      animation: "scrollX 20s linear infinite",
     }}
   >
     <div
@@ -654,7 +814,7 @@ const exploreLevels = useMemo(() => {
         backgroundImage:
           "url('https://www.pixelstalk.net/wp-content/uploads/2016/10/College-Wallpapers-HD-1920x1080-620x349.jpg')",
         backgroundSize: "cover",
-        backgroundPosition: "center"
+        backgroundPosition: "center",
       }}
     />
 
@@ -665,146 +825,105 @@ const exploreLevels = useMemo(() => {
         backgroundImage:
           "url('https://www.pixelstalk.net/wp-content/uploads/2016/10/HD-download-college-wallpapers.jpg')",
         backgroundSize: "cover",
-        backgroundPosition: "center"
+        backgroundPosition: "center",
       }}
     />
   </div>
 
-  {/* OVERLAY */}
-  <div className="absolute inset-0 bg-gradient-to-br from-[#112541]/40 to-transparent z-10"></div>
+  {/* DARK BG LAYER */}
+  <div className="absolute inset-0 bg-black/30"></div>
 
-  {/* CONTENT */}
-  <div className="relative z-10 max-w-7xl mx-auto px-6 pt-24 pb-8 md:pt-28">
+  {/* GLASS CARD */}
+  <div
+    className="relative z-10 w-[92%] max-w-4xl text-center px-6 py-8 md:py-10 rounded-3xl 
+               bg-white/4 backdrop-transparent-[30px] border border-white/40 shadow-xl"
+    style={{
+      opacity: heroOpacity,
+      transform: `translateY(${scrollY * 0.2}px)`,
+      transition: "all linear",
+    }}
+  >
 
     {/* HEADING */}
-    <h1 className="
-      text-white font-extrabold
-      text-[28px] leading-[36px]
-      max-md:flex max-md:flex-col max-md:gap-0
-      md:text-[40px] md:leading-[60px] md:flex md:flex-row md:items-center md:gap-3
+     <h1 className="
+       text-white font-extrabold
+      text-[20px] leading-[36px]
+      md:text-[30px] md:leading-[58px]
     ">
-      <span>Find Your Dream</span>
+      <span> Explore Top Colleges, Courses & </span>
 
-      <span className="text-[#F4A71D]">
+      <span >
         {currentWord}
         <span className="inline-block w-[2px] h-8 bg-[#F4A71D] ml-1 animate-pulse md:h-10"></span>
       </span>
     </h1>
 
+
     {/* SUBTEXT */}
-    <p className="
-      text-gray-300 mt-3 font-medium
-      text-sm max-w-sm
-      md:text-lg md:max-w-xl
-    ">
-      Explore thousand of colleges, courses, fees, and rankings.
+    <p className="text-white/80 mt-2 text-sm md:text-base font-medium max-w-2xl mx-auto">
+      Search 1000+ colleges, exams, check fees & discover your future.
     </p>
 
     {/* SEARCH BAR */}
     <form
       onSubmit={handleSearch}
       className="
-        mt-5 w-full max-w-3xl shadow-xl rounded-2xl overflow-hidden
-        flex flex-col gap-2
-        md:flex-row md:rounded-full md:gap-0
+        mt-7 w-full max-w-3xl mx-auto flex overflow-hidden
+        rounded-xl md:rounded-full shadow-2xl bg-white grid grid-row-3 md:grid-cols-[1fr_1fr_auto] 
       "
     >
-      <div className="
-        bg-white py-3 px-5 flex items-center
-        max-md:rounded-xl
-        md:rounded-l-full md:flex-1 md:shadow-inner
-      ">
-        <svg className="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
-            d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"/>
-        </svg>
-        <input
-          type="text"
-          name="college"
-          placeholder="College Name"
-          value={heroFilters.college}
-          onChange={handleFilterChange}
-          className="w-full outline-none bg-transparent text-gray-800 placeholder-gray-500"
-        />
-      </div>
+      <input
+        type="text"
+        name="college"
+        placeholder="College Name"
+        value={heroFilters.college}
+        onChange={handleFilterChange}
+        className="flex-1 px-5 py-3 outline-none text-gray-800 placeholder-gray-500 text-sm md:text-base"
+      />
 
-      <div className="
-        bg-white py-3 px-5 flex items-center
-        max-md:rounded-xl
-        md:border-l md:border-gray-200 md:flex-1 md:shadow-inner
-      ">
-        <svg className="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
-            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.828 0l-4.243-4.243m11.314-11.314L13.414 3.1a1.998 1.998 0 00-2.828 0L6.343 7.343"/>
-        </svg>
-        <input
-          type="text"
-          name="city"
-          placeholder="City"
-          value={heroFilters.city}
-          onChange={handleFilterChange}
-          className="w-full outline-none bg-transparent text-gray-800 placeholder-gray-500"
-        />
-      </div>
+      <input
+        type="text"
+        name="city"
+        placeholder="City"
+        value={heroFilters.city}
+        onChange={handleFilterChange}
+        className="
+          flex-1 px-5 py-3 outline-none border-x border-gray-200 
+          text-gray-800 placeholder-gray-500 text-sm md:text-base
+        "
+      />
 
       <button
         type="submit"
         className="
-          bg-[#0F6BC9] text-white font-semibold
-          py-3 text-sm
-          max-md:rounded-xl max-md:w-full
-          md:w-[140px] md:rounded-r-full md:text-base
-          hover:bg-[#0c59a3] transition
+          bg-[#0F6BC9] px-8 py-3 text-white font-semibold
+          hover:bg-[#0c59a3] text-sm md:text-base
         "
       >
         Search
       </button>
     </form>
 
-    {/* WHY CHOOSE SECTION */}
-    <h2 className="text-white font-semibold mt-6 mb-3 text-lg md:text-xl">
-      Why Choose StudyCups
-    </h2>
-
-    {/* 4 CARDS IN ONE LINE ON MOBILE */}
-    <div className="
-      grid gap-3
-      max-md:grid-cols-4
-      md:grid-cols-4 md:gap-4 md:max-w-3xl
-    ">
-      {whyChooseUsFeatures.map((item) => (
-        <div
-          key={item.id}
-          className="
-            bg-white rounded-xl shadow-md
-            flex flex-col items-center text-center transition
-            py-4 px-3 hover:shadow-lg hover:scale-[1.01]
-
-            /* MOBILE: small cards */
-            max-md:p-2 max-md:scale-[0.85] max-md:leading-tight
-          "
-        >
-          <div className="p-2 rounded-lg bg-blue-100 mb-1">
-            {item.icon}
-          </div>
-          <p className="font-semibold text-[10px] md:text-sm text-[#0A2A6C]">
-            {item.title}
-          </p>
-          <p className="text-gray-500 text-[8px] md:text-xs mt-1">
-            {item.subtitle}
-          </p>
-        </div>
-      ))}
-    </div>
-
+    {/* WHY CHOOSE */}
+  
   </div>
 </section>
+
 
 
             {/* -------------------------------------------------- */}
             {/* TOP COURSES / STUDY GOAL (Image 1 middle row)     */}
             {/* -------------------------------------------------- */}
-
+<div
+style={{
+  marginTop: "-120px",
+  paddingTop: "120px",
+  background: "white",
+  borderRadius: "40px 40px 0 0",
+  boxShadow: "0 -20px 60px rgba(0,0,0,.08)"
+}}
+>
+     <FadeSection delay={150}>
        <section className="pt-5 pb-10 bg-white shadow-[0_20px_40px_rgba(0,0,0,0.06)]">
   <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
@@ -907,13 +1026,18 @@ const exploreLevels = useMemo(() => {
       ))}
     </div>
   </div>
-</section>
+</section> 
+      </FadeSection>
+</div>
 
             {/* -------------------------------------------------- */}
             {/* FIND YOUR IDEAL COLLEGE (Top Universities cards)  */}
             {/* -------------------------------------------------- */}
-
-            <section className="pb-6 bg-white mt-10 pt-12 shadow-[0_12px_28px_rgba(0,0,0,0.06)] rounded-2xl">
+   
+            <FadeSection delay={150}>
+            <section
+            
+            className="pb-6 bg-white mt-10 pt-12 shadow-[0_12px_28px_rgba(0,0,0,0.06)] rounded-2xl">
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         {/* Heading */}
@@ -1047,7 +1171,8 @@ const exploreLevels = useMemo(() => {
         </div>
 
     </div>
-</section>
+</section> 
+</FadeSection>
 
           {/* Top Study Places Section */}
  <section className="py-3 bg-[#F8F9FA] relative overflow-hidden">
@@ -1067,7 +1192,11 @@ const exploreLevels = useMemo(() => {
     </h2>
 
     <p className="text-[14px] md:text-[16px] leading-[20px] md:leading-[24px] text-black text-center mt-1">
-      Search by city to <span className="text-[#0CC25F] font-semibold">Explore Top Colleges</span> in your area.
+      Search by city to{" "}
+      <span className="text-[#0CC25F] font-semibold">
+        Explore Top Colleges
+      </span>{" "}
+      in your area.
     </p>
 
     {/* SEARCH BAR */}
@@ -1079,7 +1208,7 @@ const exploreLevels = useMemo(() => {
             type="text"
             placeholder="Search city or location..."
             value={query}
-  onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => setQuery(e.target.value)}
             className="
               w-full py-3 md:py-4 pl-12 pr-4 rounded-xl border border-gray-300 
               shadow-sm bg-white text-gray-700 
@@ -1087,11 +1216,13 @@ const exploreLevels = useMemo(() => {
               max-md:text-sm
             "
           />
-          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-lg">🔍</span>
+          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-lg">
+            🔍
+          </span>
         </div>
 
         <button
-         onClick={handleCitySearch}
+          onClick={handleCitySearch}
           className="
             px-6 py-3 md:py-4 rounded-xl text-white font-semibold 
             bg-[#0A225A] hover:bg-[#071a3f]
@@ -1104,31 +1235,26 @@ const exploreLevels = useMemo(() => {
 
       </div>
     </div>
+
     {error && (
-  <p className="text-red-600 text-sm mt-2 text-center">{error}</p>
-)}
+      <p className="text-red-600 text-sm mt-2 text-center">{error}</p>
+    )}
 
     {/* CITY SCROLLER */}
     <div className="relative mt-8 md:mt-10">
 
-      {/* LEFT ARROW (desktop only) */}
+      {/* LEFT ARROW */}
       <button
         onClick={() =>
-          document.getElementById("cityCarousel")?.scrollBy({ left: -250, behavior: "smooth" })
+          document
+            .getElementById("cityCarousel")
+            ?.scrollBy({ left: -250, behavior: "smooth" })
         }
         className="hidden md:flex items-center justify-center absolute left-[-30px] top-1/2 
-                 -translate-y-1/2 h-12 w-12 bg-white shadow-lg border border-gray-200 
-                 rounded-full z-20 hover:scale-110 transition"
+        -translate-y-1/2 h-12 w-12 bg-white shadow-lg border border-gray-200 
+        rounded-full z-20 hover:scale-110 transition"
       >
-        <svg width="22" height="22" fill="none" viewBox="0 0 24 24">
-          <path
-            d="M15 19L8 12L15 5"
-            stroke="#0A2A6C"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
+        ‹
       </button>
 
       {/* SCROLLABLE ROW */}
@@ -1139,81 +1265,68 @@ const exploreLevels = useMemo(() => {
           overflow-x-auto scroll-smooth scrollbar-hide
           snap-x snap-mandatory
           pb-3 pr-2
-
-          /* MOBILE FIX */
           max-md:overflow-x-scroll
           max-md:pl-1
         "
       >
-        {[
-          { name: "Delhi NCR", icon: "/icons/gate-of-india.png" },
-          { name: "Bangalore", icon: "/icons/bangalore.png" },
-          { name: "Hyderabad", icon: "/icons/red-fort_3806647.png" },
-          { name: "Pune", icon: "/icons/arch_2189457.png" },
-          { name: "Mumbai", icon: "/icons/temple_6482997.png" },
-          { name: "Chennai", icon: "/icons/temple_510019.png" },
-          { name: "Kolkata", icon: "/icons/gate.png" },
-          { name: "Lucknow", icon: "/icons/lighthouse_8162871.png" },
-          {name:"Kanpur" , icon: "/icons/university.png"}
-        ].map((city, index) => (
+        {filteredCities.map((city) => (
           <div
-        
-            key={index}
-             ref={cityRefs[city.name]}  
-            onClick={() => 
-                
-                setView({ page: "listing",
-  filters: { city: city.name }})}
+            key={city.city}
+            ref={cityRefs[city.city]}
+            onClick={() =>
+              setView({
+                page: "listing",
+                filters: { city: city.city },
+              })
+            }
             className={`
-                  min-w-[130px] md:min-w-[150px]
+              min-w-[130px] md:min-w-[150px]
               h-[135px] md:h-[150px]
-              bg-white rounded-2xl border border-gray-200 
+              bg-white rounded-2xl border border-gray-200
               shadow-md hover:shadow-xl 
-              snap-start p-4 md:p-6 cursor-pointer 
+              snap-start p-4 md:p-6 cursor-pointer
               flex flex-col items-center justify-center transition
-               ${activeCity === city.name ? "bg-blue-100 border-blue-500 scale-105" : "bg-white"}
-                
-                
-                
-                
-                `}
-            
+              ${
+                activeCity === city.city
+                  ? "bg-blue-100 border-blue-500 scale-105"
+                  : ""
+              }
+            `}
           >
             <div className="h-12 w-12 md:h-14 md:w-14 flex items-center justify-center">
-              <img src={city.icon} alt={city.name} className="h-10 w-10 md:h-12 md:w-12 object-contain" />
+              <img
+                src={getCityIcon(city.city)}
+                alt={city.city}
+                className="h-10 w-10 md:h-12 md:w-12 object-contain"
+              />
             </div>
 
             <p className="font-bold text-sm md:text-lg text-[#0A2A6C] mt-2 md:mt-3">
-              {city.name}
+              {city.city}
             </p>
           </div>
         ))}
       </div>
 
-      {/* RIGHT ARROW (desktop only) */}
+      {/* RIGHT ARROW */}
       <button
         onClick={() =>
-          document.getElementById("cityCarousel")?.scrollBy({ left: 250, behavior: "smooth" })
+          document
+            .getElementById("cityCarousel")
+            ?.scrollBy({ left: 250, behavior: "smooth" })
         }
         className="hidden md:flex items-center justify-center absolute right-[-30px] top-1/2 
-                 -translate-y-1/2 h-12 w-12 bg-white shadow-lg border border-gray-200 
-                 rounded-full z-20 hover:scale-110 transition"
+        -translate-y-1/2 h-12 w-12 bg-white shadow-lg border border-gray-200 
+        rounded-full z-20 hover:scale-110 transition"
       >
-        <svg width="22" height="22" fill="none" viewBox="0 0 24 24">
-          <path
-            d="M9 5L16 12L9 19"
-            stroke="#0A2A6C"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
+        ›
       </button>
 
     </div>
 
   </div>
 </section>
+
 
 
 {/* EXPLORE COURSES SECTION */}
@@ -1305,9 +1418,21 @@ const exploreLevels = useMemo(() => {
             </div>
 
             {/* Title */}
-            <h3 className="text-lg font-bold text-slate-900 mb-3 leading-tight">
-              {course.name}
-            </h3>
+          <h3
+  className="
+    text-[14px]
+    mb-3
+    leading-tight
+    truncate
+    whitespace-nowrap
+    overflow-hidden
+    max-w-full
+  "
+  title={course.name}
+>
+  {course.name}
+</h3>
+
 
             {/* Info Boxes */}
             <div className="grid grid-cols-2 gap-3 text-xs mb-4">
@@ -1324,17 +1449,13 @@ const exploreLevels = useMemo(() => {
                 </span>
               </div>
 
-              <div className="bg-gray-50 p-3 rounded-md border flex flex-col">
-                <span className="text-gray-500 text-[11px]">Colleges</span>
-                <span className="font-semibold">
-               {
-  colleges.filter(col =>
-    col.courses?.some(c => c.name === course.name)
-  ).length
-}
+             <div className="bg-gray-50 p-3 rounded-md border flex flex-col">
+  <span className="text-gray-500 text-[11px]">Colleges</span>
+  <span className="font-semibold">
+    {course.colleges?.length || 0}
+  </span>
+</div>
 
-                </span>
-              </div>
 
               <div className="bg-gray-50 p-3 rounded-md border flex flex-col">
                 <span className="text-gray-500 text-[11px]">Level</span>

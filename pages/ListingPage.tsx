@@ -10,7 +10,8 @@ type Filters = {
   city: string;
   course: string;
   stream: string;
-  collegeType: "All" | "Private" | "Government";
+  collegeType: string;
+
   minRating: number;
 };
 
@@ -31,6 +32,8 @@ interface FilterSidebarProps {
   setFilters: React.Dispatch<React.SetStateAction<Filters>>;
   onClearFilters: () => void;
   forceShow?: boolean;
+  colleges: College[];
+
 }
 
 /* ================= FILTER SIDEBAR (UNCHANGED) ================= */
@@ -40,9 +43,28 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
   setFilters,
   onClearFilters,
   forceShow = false,
+  colleges,
 }) => {
-  const streams = Object.keys(COURSE_STREAMS);
-  const collegeTypes: Filters["collegeType"][] = ["All", "Private", "Government"];
+  const streams = useMemo(() => {
+  const set = new Set<string>();
+
+  colleges.forEach((c) => {
+    const s = c.rawScraped?.stream;
+    if (Array.isArray(s)) s.forEach(v => set.add(v));
+    else if (typeof s === "string") set.add(s);
+  });
+
+  return Array.from(set);
+}, [colleges]);
+
+  const collegeTypes = useMemo(() => {
+  const set = new Set<string>();
+  colleges.forEach((c) => {
+    if (c.type) set.add(c.type.trim());
+  });
+  return ["All", ...Array.from(set)];
+}, [colleges]);
+
   const ratings = [
     { label: "Any", value: 0 },
     { label: "4.5+", value: 4.5 },
@@ -113,10 +135,9 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
                   onClick={() => setFilters((p) => ({ ...p, stream: s }))}
                   className={`
                     px-3 py-1.5 text-xs font-medium rounded-full border
-                    ${
-                      filters.stream === s
-                        ? "bg-[--primary-medium] text-white border-[--primary-medium]"
-                        : "bg-white text-slate-700 hover:bg-slate-100"
+                    ${filters.stream === s
+                      ? "bg-[--primary-medium] text-white border-[--primary-medium]"
+                      : "bg-white text-slate-700 hover:bg-slate-100"
                     }
                   `}
                 >
@@ -139,11 +160,10 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
                     setFilters((p) => ({ ...p, collegeType: t }))
                   }
                   className={`
-                    px-2 py-2 text-xs font-medium rounded-lg border
-                    ${
-                      filters.collegeType === t
-                        ? "bg-[--primary-medium] text-white border-[--primary-medium]"
-                        : "bg-white text-slate-700 hover:bg-slate-100"
+                    px-2 py-2 text-[9px] font-medium rounded-lg border
+                    ${filters.collegeType === t
+                      ? "bg-[--primary-medium] text-white border-[--primary-medium]"
+                      : "bg-white text-slate-700 hover:bg-slate-100"
                     }
                   `}
                 >
@@ -167,10 +187,9 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
                   }
                   className={`
                     px-3 py-1.5 text-xs font-medium rounded-full border
-                    ${
-                      filters.minRating === r.value
-                        ? "bg-amber-400 text-black border-amber-400"
-                        : "bg-white text-slate-700 hover:bg-slate-100"
+                    ${filters.minRating === r.value
+                      ? "bg-amber-400 text-black border-amber-400"
+                      : "bg-white text-slate-700 hover:bg-slate-100"
                     }
                   `}
                 >
@@ -215,24 +234,65 @@ const ListingPage: React.FC<ListingPageProps> = ({
     }
   }, [initialFilters]);
 
-  const filteredColleges = useMemo(() => {
-    return colleges.filter((c) => {
-      return (
-        (!filters.college ||
-          c.name.toLowerCase().includes(filters.college.toLowerCase())) &&
-        (!filters.city ||
-          c.location.toLowerCase().includes(filters.city.toLowerCase())) &&
-        (!filters.course ||
-          c.courses.some((co) =>
-            co.name.toLowerCase().includes(filters.course.toLowerCase())
-          )) &&
-        (filters.stream === "All" || c.stream === filters.stream) &&
-        (filters.collegeType === "All" ||
-          c.type === filters.collegeType) &&
-        c.rating >= filters.minRating
+ const normalize = (s = "") =>
+  s.toLowerCase().replace(/\s+/g, "");
+
+
+const filteredColleges = useMemo(() => {
+  return colleges.filter((c) => {
+
+    // 1️⃣ College name
+    if (
+      filters.college &&
+      !c.name?.toLowerCase().includes(filters.college.toLowerCase())
+    ) return false;
+
+    // 2️⃣ City
+    if (
+      filters.city &&
+      !normalize(c.location).includes(normalize(filters.city))
+    ) return false;
+
+    // 3️⃣ Course (SAFE)
+    if (filters.course) {
+      const courses = c.rawScraped?.courses;
+      if (!Array.isArray(courses)) return true; // allow if missing
+      const hasCourse = courses.some(co =>
+        co.name?.toLowerCase().includes(filters.course.toLowerCase())
       );
-    });
-  }, [colleges, filters]);
+      if (!hasCourse) return false;
+    }
+
+    // 4️⃣ Stream (SAFE + normalized)
+    if (filters.stream !== "All") {
+      const s = c.rawScraped?.stream;
+      if (!s) return true; // allow missing stream
+
+      const match = Array.isArray(s)
+        ? s.map(v => v.toLowerCase()).includes(filters.stream.toLowerCase())
+        : s.toLowerCase() === filters.stream.toLowerCase();
+
+      if (!match) return false;
+    }
+
+    // 5️⃣ College type (SAFE)
+    if (
+      filters.collegeType !== "All" &&
+      c.type &&
+      c.type !== filters.collegeType
+    ) return false;
+
+    // 6️⃣ Rating (SAFE)
+    if (filters.minRating > 0) {
+      const rating = Number(c.rating);
+      if (!rating || rating < filters.minRating) return false;
+    }
+
+    return true;
+  });
+}, [colleges, filters]);
+
+
 
   const clearFilters = () =>
     setFilters({
@@ -248,45 +308,45 @@ const ListingPage: React.FC<ListingPageProps> = ({
     <div className="bg-[#f5f7fb] min-h-screen">
 
       {/* HERO */}
-   <section className="md:mt-24 mt-10 mb-6">
-  
-  {/* MOBILE: full width | DESKTOP: centered */}
-  <div className="md:max-w-7xl md:mx-auto md:px-6">
-    
-    <div
-      className="
+      <section className="md:mt-24 mt-10 mb-6">
+
+        {/* MOBILE: full width | DESKTOP: centered */}
+        <div className="md:max-w-7xl md:mx-auto md:px-6">
+
+          <div
+            className="
         bg-gradient-to-b from-[#0f2a44] to-[#1e4e79] text-white
         rounded-none md:rounded-3xl rounded-b-3xl
         px-4 md:px-6
         py-8
       "
-    >
-      <h1 className="text-xl md:text-3xl font-extrabold">
-        Explore Top Colleges in India
-      </h1>
+          >
+            <h1 className="text-xl md:text-3xl font-extrabold">
+              Explore Top Colleges in India
+            </h1>
 
-      <p className="text-sm md:text-base text-slate-200 mt-1">
-        Compare colleges by fees, placements, ratings and courses.
-      </p>
+            <p className="text-sm md:text-base text-slate-200 mt-1">
+              Compare colleges by fees, placements, ratings and courses.
+            </p>
 
-      <div className="grid grid-cols-3 gap-3 mt-4">
-        <div className="bg-white/10 rounded-xl p-3 text-center">
-          <p className="text-lg font-bold text-emerald-400">500+</p>
-          <p className="text-[11px] text-white/80">Colleges Listed</p>
-        </div>
-        <div className="bg-white/10 rounded-xl p-3 text-center">
-          <p className="text-lg font-bold">50</p>
-          <p className="text-[11px] text-white/80">States Covered</p>
-        </div>
-        <div className="bg-white/10 rounded-xl p-3 text-center">
-          <p className="text-lg font-bold text-sky-300">100K+</p>
-          <p className="text-[11px] text-white/80">Students Enrolled</p>
-        </div>
-      </div>
-    </div>
+            <div className="grid grid-cols-3 gap-3 mt-4">
+              <div className="bg-white/10 rounded-xl p-3 text-center">
+                <p className="text-lg font-bold text-emerald-400">500+</p>
+                <p className="text-[11px] text-white/80">Colleges Listed</p>
+              </div>
+              <div className="bg-white/10 rounded-xl p-3 text-center">
+                <p className="text-lg font-bold">50</p>
+                <p className="text-[11px] text-white/80">States Covered</p>
+              </div>
+              <div className="bg-white/10 rounded-xl p-3 text-center">
+                <p className="text-lg font-bold text-sky-300">100K+</p>
+                <p className="text-[11px] text-white/80">Students Enrolled</p>
+              </div>
+            </div>
+          </div>
 
-  </div>
-</section>
+        </div>
+      </section>
 
 
       {/* ✅ ONLY MOBILE SEARCH + FILTER (UPPER ONE) */}
@@ -318,7 +378,9 @@ const ListingPage: React.FC<ListingPageProps> = ({
             filters={filters}
             setFilters={setFilters}
             onClearFilters={clearFilters}
+            colleges={colleges}
           />
+
 
           <main className="flex-1">
 
@@ -330,21 +392,21 @@ const ListingPage: React.FC<ListingPageProps> = ({
             </div>
 
             {/* CARDS */}
-     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 
                 justify-items-center md:justify-items-stretch ">
 
 
               {filteredColleges.map((college) => (
-              <CollegeCard
-  key={college.id}
-  college={college}
-  setView={setView}
-  isCompared={compareList.includes(college.id)}
-  onCompareToggle={onCompareToggle}
-  isListingCard
-  onOpenApplyNow={onOpenApplyNow}
-  onOpenBrochure={onOpenBrochure} // ✅ NOW IT WORKS
-/>
+                <CollegeCard
+                  key={college.id}
+                  college={college}
+                  setView={setView}
+                  isCompared={compareList.includes(college.id)}
+                  onCompareToggle={onCompareToggle}
+                  isListingCard
+                  onOpenApplyNow={onOpenApplyNow}
+                  onOpenBrochure={onOpenBrochure} // ✅ NOW IT WORKS
+                />
 
               ))}
             </div>
@@ -370,6 +432,7 @@ const ListingPage: React.FC<ListingPageProps> = ({
               filters={filters}
               setFilters={setFilters}
               onClearFilters={clearFilters}
+               colleges={colleges} 
               forceShow
             />
 

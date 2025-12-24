@@ -31,10 +31,20 @@ const Header: React.FC<HeaderProps> = ({ setView, onOpenApplyNow, view }) => {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-[#1E4A7A]  shadow-md rounded-bl-[10px] rounded-br-[10px]">
+  <header 
+  className="
+    fixed top-0 left-0 right-0 z-50
+    bg-white/10 
+    backdrop-blur-xl
+    border-b border-white/20
+    shadow-[0_8px_25px_rgba(0,0,0,0.08)]
+    rounded-bl-[18px] rounded-br-[18px]
+  "
+>
+
 
       {/* WRAPPER (fixed for mobile) */}
-      <div className="max-w-9xl mx-auto px-3 py-2 ">
+      <div className="max-w-9xl mx-auto px-3 py-2  ">
 
         {/* TOP BAR */}
         <div
@@ -48,6 +58,8 @@ const Header: React.FC<HeaderProps> = ({ setView, onOpenApplyNow, view }) => {
 
     md:px-6 md:py-2   /* Normal size on desktop */
     md:rounded-10px   /* Fully rounded on desktop */
+      bg-white/10 
+    backdrop-blur-xl
   "
         >
 
@@ -92,12 +104,12 @@ const Header: React.FC<HeaderProps> = ({ setView, onOpenApplyNow, view }) => {
               Exams
             </button>
 
-            <button
+            {/* <button
               onClick={() => handleNavClick({ page: "blog" })}
               className={tabClass("blog")}
             >
               Blog
-            </button>
+            </button> */}
 
             <button
               onClick={() => handleNavClick({ page: "compare" })}
@@ -112,12 +124,23 @@ const Header: React.FC<HeaderProps> = ({ setView, onOpenApplyNow, view }) => {
                 d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
 
-            <svg className="w-5 h-5 cursor-pointer hover:text-[#062042]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
-                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14c-4.418 0-7.879 
-                2.067-9 5.385A2.327 2.327 0 005 21h14c1.092 0 
-                2.016-.628 2.5-1.615C19.879 16.067 16.418 14 12 14z" />
-            </svg>
+           <svg
+  onClick={() => navigate("/register")}
+  className="w-5 h-5 cursor-pointer hover:text-[#062042]"
+  fill="none"
+  stroke="currentColor"
+  viewBox="0 0 24 24"
+>
+  <path
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    strokeWidth="2"
+    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14c-4.418 0-7.879 
+    2.067-9 5.385A2.327 2.327 0 005 21h14c1.092 0 
+    2.016-.628 2.5-1.615C19.879 16.067 16.418 14 12 14z"
+  />
+</svg>
+
 
             <button
               onClick={onOpenApplyNow}
@@ -165,7 +188,7 @@ const Header: React.FC<HeaderProps> = ({ setView, onOpenApplyNow, view }) => {
 
             <button
               onClick={onOpenApplyNow}
-              className="w-full mt-3 py-3 bg-[#f47062] rounded-full font-semibold"
+              className="w-full mt-3 py-3 bg-[#1E4A7A] rounded-full font-semibold"
             >
               Apply Now
             </button>

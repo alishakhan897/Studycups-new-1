@@ -88,7 +88,7 @@ const onCompareToggle = (id: number) => {
   useEffect(() => {
     const fetchColleges = async () => {
       try {
-        const response = await fetch("http://localhost:5000/api/colleges");
+        const response = await fetch("https://studycupsbackend.onrender.com/api/colleges");
         const json = await response.json();
 
 
@@ -108,7 +108,7 @@ const onCompareToggle = (id: number) => {
   useEffect(() => {
     const fetchBlogs = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/blogs");
+        const res = await fetch("https://studycupsbackend.onrender.com/api/blogs");
         const json = await res.json();
         setBlogs(json.data || []);
         setLoadingBlogs(false);
@@ -124,7 +124,7 @@ const onCompareToggle = (id: number) => {
   useEffect(() => {
     const fetchExams = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/exams");
+        const res = await fetch("https://studycupsbackend.onrender.com/api/exams");
         const json = await res.json();
         setExams(json.data || []);
       } catch (err) {
@@ -137,7 +137,7 @@ const onCompareToggle = (id: number) => {
 
   const fetchCourseDetails = async (id: number) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/course/${id}`);
+      const response = await fetch(`https://studycupsbackend.onrender.com/api/course/${id}`);
       const json = await response.json();
       setSelectedCourse(json.course);
 
@@ -187,7 +187,8 @@ const onCompareToggle = (id: number) => {
       case 'detail':
         return (
           <DetailPage
-            college={colleges.find(c => c.id === view.collegeId)}
+          college={colleges.find(c => c.id === view.collegeId)}
+
             setView={setView}
             compareList={compareList}
   onCompareToggle={onCompareToggle}
@@ -244,7 +245,8 @@ const onCompareToggle = (id: number) => {
             courseKey={courseKey}
             courseIds={courseIds}
             allColleges={colleges}
-            setView={setView}
+            setView={setView} 
+            onOpenApplyNow={openApplyModal}
           />
         );
       }
